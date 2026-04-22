@@ -127,4 +127,291 @@ describe('buildRenderTree', () => {
     const p = tree[0] as RenderElement;
     expect(p.style.color).toBe('#123456');
   });
+
+  it('applies tagsStyles over tag defaults', () => {
+    const tree = buildRenderTree(parseHtml('<h1>x</h1>'), {
+      tagsStyles: { h1: { color: 'purple', fontSize: 40 } },
+    });
+    const h1 = tree[0] as RenderElement;
+    expect(h1.style.color).toBe('purple');
+    expect(h1.style.fontSize).toBe(40);
+  });
+
+  it('accepts tagsStyles as CSS string', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      tagsStyles: { p: 'color: green; font-size: 18px' },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('green');
+    expect(p.style.fontSize).toBe(18);
+  });
+
+  it('applies classesStyles to matching class', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="warn">x</p>'),
+      { classesStyles: { warn: { color: 'orange' } } },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('orange');
+  });
+
+  it('applies classesStyles for multiple classes in source order', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="a b">x</p>'),
+      {
+        classesStyles: {
+          a: { color: 'red' },
+          b: { color: 'blue' },
+        },
+      },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('blue');
+  });
+
+  it('applies idsStyles to matching id', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p id="hero">x</p>'),
+      { idsStyles: { hero: { color: 'red', fontSize: 30 } } },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('red');
+    expect(p.style.fontSize).toBe(30);
+  });
+
+  it('respects cascade order: inline > id > class > tag', () => {
+    const tree = buildRenderTree(
+      parseHtml(
+        '<p class="c" id="i" style="color: inline-win">x</p>',
+      ),
+      {
+        tagsStyles: { p: { color: 'tag' } },
+        classesStyles: { c: { color: 'class' } },
+        idsStyles: { i: { color: 'id' } },
+      },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('inline-win');
+  });
+
+  it('id beats class when no inline style', () => {
+    const tree = buildRenderTree(parseHtml('<p class="c" id="i">x</p>'), {
+      classesStyles: { c: { color: 'class' } },
+      idsStyles: { i: { color: 'id' } },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('id');
+  });
+
+  it('ignoredDomTags drops tag and its subtree', () => {
+    const tree = buildRenderTree(
+      parseHtml('<div>keep<iframe>drop this</iframe>keep</div>'),
+      { ignoredDomTags: ['iframe'] },
+    );
+    const div = tree[0] as RenderElement;
+    expect(div.children).toHaveLength(2);
+    expect((div.children[0] as { text: string }).text).toBe('keep');
+    expect((div.children[1] as { text: string }).text).toBe('keep');
+  });
+
+  it('ignoredDomTags is case-insensitive', () => {
+    const tree = buildRenderTree(parseHtml('<IFRAME>drop</IFRAME>'), {
+      ignoredDomTags: ['iframe'],
+    });
+    expect(tree).toHaveLength(0);
+  });
+
+  it('ignoredStyles drops CSS-name properties after cascade', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p style="color: red; font-size: 20px">x</p>'),
+      { ignoredStyles: ['color'] },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBeUndefined();
+    expect(p.style.fontSize).toBe(20);
+  });
+
+  it('ignoredStyles accepts RN camelCase too', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p style="background-color: yellow">x</p>'),
+      { ignoredStyles: ['backgroundColor'] },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.backgroundColor).toBeUndefined();
+  });
+
+  it('ol respects HTML start attribute', () => {
+    const tree = buildRenderTree(
+      parseHtml('<ol start="5"><li>a</li><li>b</li></ol>'),
+    );
+    const ol = tree[0] as RenderElement;
+    expect((ol.children[0] as RenderElement).listMarker).toBe('5. ');
+    expect((ol.children[1] as RenderElement).listMarker).toBe('6. ');
+  });
+
+  it('ol respects renderersProps.ol.startIndex when no start attr', () => {
+    const tree = buildRenderTree(
+      parseHtml('<ol><li>a</li><li>b</li></ol>'),
+      { renderersProps: { ol: { startIndex: 10 } } },
+    );
+    const ol = tree[0] as RenderElement;
+    expect((ol.children[0] as RenderElement).listMarker).toBe('10. ');
+  });
+
+  it('HTML start attribute wins over renderersProps.ol.startIndex', () => {
+    const tree = buildRenderTree(
+      parseHtml('<ol start="3"><li>a</li></ol>'),
+      { renderersProps: { ol: { startIndex: 10 } } },
+    );
+    const ol = tree[0] as RenderElement;
+    expect((ol.children[0] as RenderElement).listMarker).toBe('3. ');
+  });
+
+  it('li tracks listOrdered flag', () => {
+    const ulTree = buildRenderTree(parseHtml('<ul><li>a</li></ul>'));
+    const ulLi = (ulTree[0] as RenderElement).children[0] as RenderElement;
+    expect(ulLi.listOrdered).toBe(false);
+
+    const olTree = buildRenderTree(parseHtml('<ol><li>a</li></ol>'));
+    const olLi = (olTree[0] as RenderElement).children[0] as RenderElement;
+    expect(olLi.listOrdered).toBe(true);
+  });
+
+  it('customHTMLElementModels defines new block tag', () => {
+    const tree = buildRenderTree(
+      parseHtml('<my-card>hello</my-card>'),
+      {
+        customHTMLElementModels: {
+          'my-card': {
+            display: 'block',
+            tagDefaultStyle: { padding: 12, backgroundColor: '#eef' },
+          },
+        },
+      },
+    );
+    const card = tree[0] as RenderElement;
+    expect(card.tag).toBe('my-card');
+    expect(card.display).toBe('block');
+    expect(card.style.padding).toBe(12);
+    expect(card.style.backgroundColor).toBe('#eef');
+  });
+
+  it('customHTMLElementModels isVoid drops children', () => {
+    const tree = buildRenderTree(
+      parseHtml('<x-spacer>ignored</x-spacer>'),
+      {
+        customHTMLElementModels: {
+          'x-spacer': { display: 'block', isVoid: true },
+        },
+      },
+    );
+    const spacer = tree[0] as RenderElement;
+    expect(spacer.children).toHaveLength(0);
+  });
+
+  it('stylesheet applies type selector', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      stylesheet: 'p { color: red; font-size: 20px }',
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('red');
+    expect(p.style.fontSize).toBe(20);
+  });
+
+  it('stylesheet class selector matches by class attr', () => {
+    const tree = buildRenderTree(parseHtml('<p class="foo">x</p>'), {
+      stylesheet: '.foo { color: blue }',
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('blue');
+  });
+
+  it('stylesheet id beats class by specificity', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="c" id="i">x</p>'),
+      { stylesheet: '.c { color: class } #i { color: id }' },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('id');
+  });
+
+  it('stylesheet source order breaks specificity ties', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="a b">x</p>'),
+      { stylesheet: '.a { color: first } .b { color: second }' },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('second');
+  });
+
+  it('stylesheet descendant selector walks ancestor chain', () => {
+    const tree = buildRenderTree(
+      parseHtml('<article><h1><span>x</span></h1></article>'),
+      { stylesheet: 'article span { color: nested }' },
+    );
+    const article = tree[0] as RenderElement;
+    const h1 = article.children[0] as RenderElement;
+    const span = h1.children[0] as RenderElement;
+    expect(span.style.color).toBe('nested');
+  });
+
+  it('stylesheet child selector requires immediate parent', () => {
+    const tree = buildRenderTree(
+      parseHtml('<div><span>close</span><p><span>far</span></p></div>'),
+      { stylesheet: 'div > span { color: direct }' },
+    );
+    const div = tree[0] as RenderElement;
+    const closeSpan = div.children[0] as RenderElement;
+    const p = div.children[1] as RenderElement;
+    const farSpan = p.children[0] as RenderElement;
+    expect(closeSpan.style.color).toBe('direct');
+    expect(farSpan.style.color).not.toBe('direct');
+  });
+
+  it('programmatic tagsStyles beats stylesheet type selector', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      stylesheet: 'p { color: from-stylesheet }',
+      tagsStyles: { p: { color: 'from-tags-styles' } },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('from-tags-styles');
+  });
+
+  it('inline style wins over stylesheet', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p style="color: inline">x</p>'),
+      { stylesheet: 'p { color: from-stylesheet }' },
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('inline');
+  });
+
+  it('customHTMLElementModels can override existing tag display', () => {
+    const tree = buildRenderTree(parseHtml('<div>x</div>'), {
+      customHTMLElementModels: { div: { display: 'inline' } },
+    });
+    const div = tree[0] as RenderElement;
+    expect(div.display).toBe('inline');
+  });
+
+  it('ignoredStyles works on tag defaults too', () => {
+    const tree = buildRenderTree(parseHtml('<h1>x</h1>'), {
+      ignoredStyles: ['font-weight'],
+    });
+    const h1 = tree[0] as RenderElement;
+    expect(h1.style.fontWeight).toBeUndefined();
+    expect(h1.style.fontSize).toBe(32);
+  });
+
+  it('stores attribs on <a> for onLinkPress consumers', () => {
+    const tree = buildRenderTree(
+      parseHtml('<a href="/x" target="_blank" data-track="home">x</a>'),
+    );
+    const a = tree[0] as RenderElement;
+    expect(a.attribs).toMatchObject({
+      href: '/x',
+      target: '_blank',
+      'data-track': 'home',
+    });
+  });
 });

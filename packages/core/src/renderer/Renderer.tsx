@@ -5,62 +5,147 @@ import {
   Linking,
   StyleSheet,
   type AccessibilityRole,
+  type StyleProp,
+  type TextProps,
+  type TextStyle,
+  type ViewProps,
 } from 'react-native';
 import type {
   DomNode,
+  HTMLElementModel,
   RenderNode,
   RenderElement,
   RenderImage,
   ResolvedStyle,
+  StyleInput,
 } from '../types';
 import { parseHtml } from '../parser/parse';
 import { buildRenderTree } from '../render-tree/build';
 import { splitStyle } from '../styles/split';
 import { RenderedImage } from './RenderedImage';
 
+export interface CustomRendererInfo {
+  renderersProps: Record<string, Record<string, unknown>>;
+  contentWidth?: number;
+}
+
 export type CustomRenderer = (
   node: RenderElement,
   defaultRender: () => React.ReactNode,
+  info: CustomRendererInfo,
 ) => React.ReactNode;
 
 export type TransformDom = (dom: DomNode[]) => DomNode[];
 
+export type OnLinkPress = (
+  href: string,
+  attribs: Record<string, string>,
+) => void;
+
 export interface HtmlRendererProps {
   html: string;
   baseStyle?: ResolvedStyle;
+  tagsStyles?: Record<string, StyleInput>;
+  classesStyles?: Record<string, StyleInput>;
+  idsStyles?: Record<string, StyleInput>;
+  stylesheet?: string;
   customRenderers?: Record<string, CustomRenderer>;
+  customHTMLElementModels?: Record<string, HTMLElementModel>;
+  renderersProps?: Record<string, Record<string, unknown>>;
   contentWidth?: number;
   transformDom?: TransformDom;
+  onLinkPress?: OnLinkPress;
+  ignoredDomTags?: string[];
+  ignoredStyles?: string[];
+  defaultTextProps?: TextProps;
+  defaultViewProps?: ViewProps;
+  textSelectable?: boolean;
 }
 
 interface RenderCtx {
   customRenderers: Record<string, CustomRenderer>;
+  renderersProps: Record<string, Record<string, unknown>>;
   contentWidth?: number;
+  onLinkPress?: OnLinkPress;
+  defaultTextProps: TextProps;
+  defaultViewProps: ViewProps;
 }
 
 const ROOT_STYLE: ResolvedStyle = { color: '#000000', fontSize: 14 };
 const EMPTY_CUSTOM: Record<string, CustomRenderer> = {};
+const EMPTY_RENDERERS_PROPS: Record<string, Record<string, unknown>> = {};
+const EMPTY_TEXT_PROPS: TextProps = {};
+const EMPTY_VIEW_PROPS: ViewProps = {};
 const HEADING_LEVEL: Record<string, number> = { h1: 1, h2: 2, h3: 3, h4: 4, h5: 5, h6: 6 };
 
 export function HtmlRenderer({
   html,
   baseStyle,
+  tagsStyles,
+  classesStyles,
+  idsStyles,
+  stylesheet,
   customRenderers,
+  customHTMLElementModels,
+  renderersProps,
   contentWidth,
   transformDom,
+  onLinkPress,
+  ignoredDomTags,
+  ignoredStyles,
+  defaultTextProps,
+  defaultViewProps,
+  textSelectable,
 }: HtmlRendererProps): React.ReactElement {
   const tree = React.useMemo(() => {
     const parsed = parseHtml(html);
     const dom = transformDom ? transformDom(parsed) : parsed;
-    return buildRenderTree(dom, { baseStyle });
-  }, [html, baseStyle, transformDom]);
+    return buildRenderTree(dom, {
+      baseStyle,
+      tagsStyles,
+      classesStyles,
+      idsStyles,
+      stylesheet,
+      ignoredDomTags,
+      ignoredStyles,
+      customHTMLElementModels,
+      renderersProps,
+    });
+  }, [
+    html,
+    baseStyle,
+    tagsStyles,
+    classesStyles,
+    idsStyles,
+    stylesheet,
+    transformDom,
+    ignoredDomTags,
+    ignoredStyles,
+    customHTMLElementModels,
+    renderersProps,
+  ]);
+
+  const mergedTextProps: TextProps = React.useMemo(() => {
+    const base: TextProps = textSelectable ? { selectable: true } : {};
+    return { ...base, ...(defaultTextProps ?? EMPTY_TEXT_PROPS) };
+  }, [textSelectable, defaultTextProps]);
+
+  const mergedViewProps = defaultViewProps ?? EMPTY_VIEW_PROPS;
 
   const ctx: RenderCtx = {
     customRenderers: customRenderers ?? EMPTY_CUSTOM,
+    renderersProps: renderersProps ?? EMPTY_RENDERERS_PROPS,
     contentWidth,
+    onLinkPress,
+    defaultTextProps: mergedTextProps,
+    defaultViewProps: mergedViewProps,
   };
   const parentStyle = { ...ROOT_STYLE, ...(baseStyle ?? {}) };
-  return <View>{renderBlockChildren(tree, parentStyle, ctx)}</View>;
+  return (
+    <View {...mergedViewProps}>
+      {renderBlockChildren(tree, parentStyle, ctx)}
+    </View>
+  );
 }
 
 type Segment =
@@ -111,16 +196,25 @@ function renderSegment(
   ctx: RenderCtx,
 ): React.ReactNode {
   switch (seg.kind) {
-    case 'image':
+    case 'image': {
+      const imgProps = ctx.renderersProps.img as
+        | { initialDimensions?: { width: number; height: number } }
+        | undefined;
       return (
-        <RenderedImage key={key} node={seg.node} contentWidth={ctx.contentWidth} />
+        <RenderedImage
+          key={key}
+          node={seg.node}
+          contentWidth={ctx.contentWidth}
+          initialDimensions={imgProps?.initialDimensions}
+        />
       );
+    }
     case 'block':
       return renderBlockElement(seg.node, key, ctx);
     case 'run': {
       const { text: tStyle } = splitStyle(parentStyle);
       return (
-        <Text key={key} style={tStyle}>
+        <Text key={key} {...ctx.defaultTextProps} style={tStyle}>
           {seg.nodes.map((n, i) => renderInline(n, i, ctx))}
         </Text>
       );
@@ -135,9 +229,13 @@ function renderBlockElement(
 ): React.ReactNode {
   const custom = ctx.customRenderers[el.tag];
   if (custom) {
+    const info: CustomRendererInfo = {
+      renderersProps: ctx.renderersProps,
+      contentWidth: ctx.contentWidth,
+    };
     return (
       <React.Fragment key={key}>
-        {custom(el, () => renderBlockDefault(el, undefined, ctx))}
+        {custom(el, () => renderBlockDefault(el, undefined, ctx), info)}
       </React.Fragment>
     );
   }
@@ -152,22 +250,42 @@ function renderBlockDefault(
   const { view: vStyle, text: tStyle } = splitStyle(el.style);
 
   if (el.tag === 'hr') {
-    return <View key={key} style={[styles.hr, vStyle]} />;
+    return (
+      <View key={key} {...ctx.defaultViewProps} style={[styles.hr, vStyle]} />
+    );
   }
 
   if (el.tag === 'ul' || el.tag === 'ol') {
     return (
-      <View key={key} style={[styles.block, styles.list, vStyle]}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.block, styles.list, vStyle]}
+      >
         {renderBlockChildren(el.children, el.style, ctx)}
       </View>
     );
   }
 
   if (el.tag === 'li' && el.listMarker !== undefined) {
+    const listKey = el.listOrdered ? 'ol' : 'ul';
+    const listProps = ctx.renderersProps[listKey] as
+      | { markerTextStyle?: StyleProp<TextStyle> }
+      | undefined;
+    const markerStyleOverride = listProps?.markerTextStyle;
     return (
-      <View key={key} style={[styles.listItem, vStyle]}>
-        <Text style={[tStyle, styles.listMarker]}>{el.listMarker}</Text>
-        <View style={styles.listItemContent}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.listItem, vStyle]}
+      >
+        <Text
+          {...ctx.defaultTextProps}
+          style={[tStyle, styles.listMarker, markerStyleOverride]}
+        >
+          {el.listMarker}
+        </Text>
+        <View {...ctx.defaultViewProps} style={styles.listItemContent}>
           {renderBlockChildren(el.children, el.style, ctx)}
         </View>
       </View>
@@ -176,7 +294,11 @@ function renderBlockDefault(
 
   if (el.tag === 'pre') {
     return (
-      <View key={key} style={[styles.block, styles.preBlock, vStyle]}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.block, styles.preBlock, vStyle]}
+      >
         {renderBlockChildren(el.children, el.style, ctx)}
       </View>
     );
@@ -184,7 +306,11 @@ function renderBlockDefault(
 
   if (el.tag === 'blockquote') {
     return (
-      <View key={key} style={[styles.block, styles.blockquote, vStyle]}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.block, styles.blockquote, vStyle]}
+      >
         {renderBlockChildren(el.children, el.style, ctx)}
       </View>
     );
@@ -192,19 +318,19 @@ function renderBlockDefault(
 
   if (el.tag === 'table') {
     return (
-      <View key={key} style={[styles.table, vStyle]}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.table, vStyle]}
+      >
         {renderTableChildren(el.children, ctx)}
       </View>
     );
   }
 
-  if (
-    el.tag === 'thead' ||
-    el.tag === 'tbody' ||
-    el.tag === 'tfoot'
-  ) {
+  if (el.tag === 'thead' || el.tag === 'tbody' || el.tag === 'tfoot') {
     return (
-      <View key={key}>
+      <View key={key} {...ctx.defaultViewProps}>
         {renderTableChildren(el.children, ctx)}
       </View>
     );
@@ -220,7 +346,11 @@ function renderBlockDefault(
 
   if (el.tag === 'caption') {
     return (
-      <View key={key} style={[styles.tableCaption, vStyle]}>
+      <View
+        key={key}
+        {...ctx.defaultViewProps}
+        style={[styles.tableCaption, vStyle]}
+      >
         {renderBlockChildren(el.children, el.style, ctx)}
       </View>
     );
@@ -232,6 +362,7 @@ function renderBlockDefault(
   return (
     <View
       key={key}
+      {...ctx.defaultViewProps}
       style={[styles.block, vStyle]}
       accessibilityRole={a11yRole}
       {...(a11yLevel !== undefined ? { 'aria-level': a11yLevel } : {})}
@@ -270,7 +401,7 @@ function renderTableRow(
     }
   }
   return (
-    <View key={key} style={styles.tr}>
+    <View key={key} {...ctx.defaultViewProps} style={styles.tr}>
       {cells.map((cell, i) => renderTableCell(cell, i, ctx))}
     </View>
   );
@@ -284,7 +415,11 @@ function renderTableCell(
   const { view: vStyle } = splitStyle(cell.style);
   const flex = cell.colSpan ?? 1;
   return (
-    <View key={key} style={[styles.tableCell, { flex }, vStyle]}>
+    <View
+      key={key}
+      {...ctx.defaultViewProps}
+      style={[styles.tableCell, { flex }, vStyle]}
+    >
       {renderBlockChildren(cell.children, cell.style, ctx)}
     </View>
   );
@@ -298,7 +433,7 @@ function renderInline(
   if (node.kind === 'text') {
     const { text: tStyle } = splitStyle(node.style);
     return (
-      <Text key={key} style={tStyle}>
+      <Text key={key} {...ctx.defaultTextProps} style={tStyle}>
         {node.text}
       </Text>
     );
@@ -316,9 +451,13 @@ function renderInlineElement(
 ): React.ReactNode {
   const custom = ctx.customRenderers[el.tag];
   if (custom) {
+    const info: CustomRendererInfo = {
+      renderersProps: ctx.renderersProps,
+      contentWidth: ctx.contentWidth,
+    };
     return (
       <React.Fragment key={key}>
-        {custom(el, () => renderInlineDefault(el, undefined, ctx))}
+        {custom(el, () => renderInlineDefault(el, undefined, ctx), info)}
       </React.Fragment>
     );
   }
@@ -335,13 +474,19 @@ function renderInlineDefault(
 
   if (el.tag === 'a' && el.href) {
     const href = el.href;
+    const attribs = el.attribs ?? {};
     return (
       <Text
         key={key}
+        {...ctx.defaultTextProps}
         style={tStyle}
         accessibilityRole="link"
         onPress={() => {
-          void Linking.openURL(href);
+          if (ctx.onLinkPress) {
+            ctx.onLinkPress(href, attribs);
+          } else {
+            void Linking.openURL(href);
+          }
         }}
       >
         {children}
@@ -350,7 +495,7 @@ function renderInlineDefault(
   }
 
   return (
-    <Text key={key} style={tStyle}>
+    <Text key={key} {...ctx.defaultTextProps} style={tStyle}>
       {children}
     </Text>
   );

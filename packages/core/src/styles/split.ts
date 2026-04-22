@@ -17,10 +17,16 @@ const TEXT_KEYS = [
 ] as const;
 
 const VIEW_KEYS = [
+  'margin',
+  'marginHorizontal',
+  'marginVertical',
   'marginTop',
   'marginBottom',
   'marginLeft',
   'marginRight',
+  'padding',
+  'paddingHorizontal',
+  'paddingVertical',
   'paddingTop',
   'paddingBottom',
   'paddingLeft',
