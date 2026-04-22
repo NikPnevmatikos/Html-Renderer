@@ -1,0 +1,51 @@
+{
+  "name": "@html-renderer/core",
+  "version": "0.0.1",
+  "description": "React Native HTML renderer — pure JS, Fabric/Expo compatible",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "source": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "clean": "rimraf dist"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["<rootDir>/src/**/*.test.ts"]
+  },
+  "keywords": [
+    "react-native",
+    "html",
+    "renderer",
+    "expo",
+    "fabric"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-native": ">=0.73"
+  },
+  "dependencies": {
+    "domhandler": "^5.0.3",
+    "htmlparser2": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/react": "~19.1.0",
+    "jest": "^29.7.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "ts-jest": "^29.4.9",
+    "typescript": "~5.9.2"
+  }
+}

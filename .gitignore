@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.expo/
+.expo-shared/
+*.tsbuildinfo
+
+# Editor / tool local config
+.claude/
+.vscode/
+.idea/
+*.swp
