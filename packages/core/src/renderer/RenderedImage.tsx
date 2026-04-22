@@ -5,11 +5,13 @@ import type { RenderImage } from '../types';
 export interface RenderedImageProps {
   node: RenderImage;
   contentWidth?: number;
+  initialDimensions?: { width: number; height: number };
 }
 
 export function RenderedImage({
   node,
   contentWidth,
+  initialDimensions,
 }: RenderedImageProps): React.ReactElement {
   const hasExplicitSize = node.width !== undefined && node.height !== undefined;
   const [resolvedSize, setResolvedSize] = React.useState<
@@ -45,6 +47,14 @@ export function RenderedImage({
   }
 
   if (!resolvedSize) {
+    if (initialDimensions) {
+      const fitted = fit(
+        initialDimensions.width,
+        initialDimensions.height,
+        contentWidth,
+      );
+      return <View style={{ width: fitted.w, height: fitted.h }} />;
+    }
     return <View style={styles.placeholder} />;
   }
 

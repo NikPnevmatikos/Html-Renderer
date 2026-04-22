@@ -1,13 +1,21 @@
 import type {
   DomNode,
   DomElement,
+  HTMLElementModel,
   RenderNode,
   RenderElement,
   RenderImage,
   RenderText,
   ResolvedStyle,
+  StyleInput,
 } from '../types';
 import { parseInlineStyle } from '../styles/parse-inline';
+import { normalizeStyleInput, normalizeStyleMap } from '../styles/normalize';
+import { parseStylesheet, type CssRule } from '../styles/css-parser';
+import {
+  matchSelector,
+  type ElementInfo,
+} from '../styles/selector-match';
 import { collapseWhitespace } from './whitespace';
 import { hoistBlocks } from './hoist-blocks';
 
@@ -79,6 +87,39 @@ const BASE_STYLE: ResolvedStyle = {
 
 export interface BuildOptions {
   baseStyle?: ResolvedStyle;
+  tagsStyles?: Record<string, StyleInput>;
+  classesStyles?: Record<string, StyleInput>;
+  idsStyles?: Record<string, StyleInput>;
+  ignoredDomTags?: string[];
+  ignoredStyles?: string[];
+  customHTMLElementModels?: Record<string, HTMLElementModel>;
+  renderersProps?: Record<string, Record<string, unknown>>;
+  stylesheet?: string;
+}
+
+interface BuildCtx {
+  tagsStyles: Record<string, ResolvedStyle>;
+  classesStyles: Record<string, ResolvedStyle>;
+  idsStyles: Record<string, ResolvedStyle>;
+  ignoredDomTags: Set<string>;
+  ignoredStyleKeys: Set<string>;
+  customHTMLElementModels: Record<string, HTMLElementModel>;
+  renderersProps: Record<string, Record<string, unknown>>;
+  stylesheetRules: CssRule[];
+}
+
+function cssNameToRN(name: string): string {
+  return name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+function buildIgnoredStyleKeys(input: string[] | undefined): Set<string> {
+  const out = new Set<string>();
+  if (!input) return out;
+  for (const name of input) {
+    out.add(name);
+    out.add(cssNameToRN(name));
+  }
+  return out;
 }
 
 export function buildRenderTree(
@@ -86,8 +127,20 @@ export function buildRenderTree(
   options: BuildOptions = {},
 ): RenderNode[] {
   const rootStyle: ResolvedStyle = { ...BASE_STYLE, ...(options.baseStyle ?? {}) };
+  const ctx: BuildCtx = {
+    tagsStyles: normalizeStyleMap(options.tagsStyles),
+    classesStyles: normalizeStyleMap(options.classesStyles),
+    idsStyles: normalizeStyleMap(options.idsStyles),
+    ignoredDomTags: new Set(
+      (options.ignoredDomTags ?? []).map((t) => t.toLowerCase()),
+    ),
+    ignoredStyleKeys: buildIgnoredStyleKeys(options.ignoredStyles),
+    customHTMLElementModels: options.customHTMLElementModels ?? {},
+    renderersProps: options.renderersProps ?? {},
+    stylesheetRules: options.stylesheet ? parseStylesheet(options.stylesheet) : [],
+  };
   const raw = dom
-    .map((n) => buildNode(n, rootStyle, false))
+    .map((n) => buildNode(n, rootStyle, false, ctx, []))
     .filter((n): n is RenderNode => n !== null);
   return collapseWhitespace(hoistBlocks(raw));
 }
@@ -96,6 +149,8 @@ function buildNode(
   node: DomNode,
   inherited: ResolvedStyle,
   preserveWhitespace: boolean,
+  ctx: BuildCtx,
+  ancestors: ElementInfo[],
 ): RenderNode | null {
   if (node.type === 'text') {
     if (node.data.length === 0) return null;
@@ -107,14 +162,18 @@ function buildNode(
     if (preserveWhitespace) textNode.preserveWhitespace = true;
     return textNode;
   }
-  return buildElement(node, inherited, preserveWhitespace);
+  return buildElement(node, inherited, preserveWhitespace, ctx, ancestors);
 }
 
 function buildElement(
   el: DomElement,
   inherited: ResolvedStyle,
   preserveWhitespace: boolean,
+  ctx: BuildCtx,
+  ancestors: ElementInfo[],
 ): RenderNode | null {
+  if (ctx.ignoredDomTags.has(el.name)) return null;
+
   if (el.name === 'br') {
     return {
       kind: 'element',
@@ -136,37 +195,56 @@ function buildElement(
     return buildImage(el);
   }
 
+  const customModel = ctx.customHTMLElementModels[el.name];
+  const tagDefault = resolveTagDefault(el.name, customModel);
+
+  const elInfo: ElementInfo = {
+    tag: el.name,
+    classes: (el.attribs.class ?? '').split(/\s+/).filter(Boolean),
+    id: el.attribs.id ?? null,
+  };
+
   if (el.name === 'hr') {
     return {
       kind: 'element',
       tag: 'hr',
       display: 'block',
-      style: parseInlineStyle(el.attribs.style),
+      style: resolveStyles(el, inherited, ctx, tagDefault, elInfo, ancestors),
       children: [],
     };
   }
 
-  const tagStyle = DEFAULT_TAG_STYLES[el.name] ?? {};
-  const inlineStyle = parseInlineStyle(el.attribs.style);
-  const resolved: ResolvedStyle = { ...inherited, ...tagStyle, ...inlineStyle };
+  const display =
+    customModel?.display ??
+    (BLOCK_TAGS.has(el.name) ? 'block' : 'inline');
+
+  const resolved = resolveStyles(el, inherited, ctx, tagDefault, elInfo, ancestors);
   const childPreserve = preserveWhitespace || el.name === 'pre';
+
+  const isVoid = customModel?.isVoid === true;
+  const childAncestors = [...ancestors, elInfo];
 
   const element: RenderElement = {
     kind: 'element',
     tag: el.name,
-    display: BLOCK_TAGS.has(el.name) ? 'block' : 'inline',
+    display,
     style: resolved,
-    children: el.children
-      .map((c) => buildNode(c, resolved, childPreserve))
-      .filter((c): c is RenderNode => c !== null),
+    children: isVoid
+      ? []
+      : el.children
+          .map((c) => buildNode(c, resolved, childPreserve, ctx, childAncestors))
+          .filter((c): c is RenderNode => c !== null),
   };
 
-  if (el.name === 'a' && el.attribs.href) {
-    element.href = el.attribs.href;
+  if (el.name === 'a') {
+    if (el.attribs.href) element.href = el.attribs.href;
+    element.attribs = { ...el.attribs };
   }
 
   if (el.name === 'ul' || el.name === 'ol') {
-    assignListMarkers(element, el.name === 'ol');
+    const ordered = el.name === 'ol';
+    const start = ordered ? getStartIndex(el, ctx) : 1;
+    assignListMarkers(element, ordered, start);
   }
 
   if (el.name === 'td' || el.name === 'th') {
@@ -179,11 +257,117 @@ function buildElement(
   return element;
 }
 
-function assignListMarkers(list: RenderElement, ordered: boolean): void {
-  let index = 1;
+function resolveTagDefault(
+  tagName: string,
+  customModel: HTMLElementModel | undefined,
+): ResolvedStyle {
+  const base = DEFAULT_TAG_STYLES[tagName] ?? {};
+  if (!customModel?.tagDefaultStyle) return base;
+  const modelStyle = normalizeStyleInput(customModel.tagDefaultStyle);
+  return { ...base, ...modelStyle };
+}
+
+function resolveStyles(
+  el: DomElement,
+  inherited: ResolvedStyle,
+  ctx: BuildCtx,
+  tagDefault: ResolvedStyle,
+  elInfo: ElementInfo,
+  ancestors: ElementInfo[],
+): ResolvedStyle {
+  const stylesheetMerged = resolveStylesheetMatches(ctx, elInfo, ancestors);
+  const tagsOverride = ctx.tagsStyles[el.name] ?? {};
+
+  const classNames = elInfo.classes;
+  let classesOverride: ResolvedStyle = {};
+  for (const cls of classNames) {
+    const match = ctx.classesStyles[cls];
+    if (match) classesOverride = { ...classesOverride, ...match };
+  }
+
+  const id = elInfo.id;
+  const idOverride = id ? (ctx.idsStyles[id] ?? {}) : {};
+
+  const inlineStyle = parseInlineStyle(el.attribs.style);
+
+  const merged: ResolvedStyle = {
+    ...inherited,
+    ...tagDefault,
+    ...stylesheetMerged,
+    ...tagsOverride,
+    ...classesOverride,
+    ...idOverride,
+    ...inlineStyle,
+  };
+
+  if (ctx.ignoredStyleKeys.size > 0) {
+    for (const key of ctx.ignoredStyleKeys) {
+      delete (merged as Record<string, unknown>)[key];
+    }
+  }
+
+  return merged;
+}
+
+function resolveStylesheetMatches(
+  ctx: BuildCtx,
+  elInfo: ElementInfo,
+  ancestors: ElementInfo[],
+): ResolvedStyle {
+  if (ctx.stylesheetRules.length === 0) return {};
+
+  const matched: Array<{
+    declarations: ResolvedStyle;
+    specificity: number;
+    sourceOrder: number;
+  }> = [];
+
+  for (const rule of ctx.stylesheetRules) {
+    for (const sel of rule.selectors) {
+      if (matchSelector(sel, elInfo, ancestors)) {
+        matched.push({
+          declarations: rule.declarations,
+          specificity: sel.specificity,
+          sourceOrder: rule.sourceOrder,
+        });
+        break;
+      }
+    }
+  }
+
+  matched.sort((a, b) => {
+    if (a.specificity !== b.specificity) {
+      return a.specificity - b.specificity;
+    }
+    return a.sourceOrder - b.sourceOrder;
+  });
+
+  let merged: ResolvedStyle = {};
+  for (const m of matched) {
+    merged = { ...merged, ...m.declarations };
+  }
+  return merged;
+}
+
+function getStartIndex(el: DomElement, ctx: BuildCtx): number {
+  const attrN = parseInt(el.attribs.start ?? '', 10);
+  if (!isNaN(attrN)) return attrN;
+  const olProps = ctx.renderersProps.ol as
+    | { startIndex?: number }
+    | undefined;
+  return olProps?.startIndex ?? 1;
+}
+
+function assignListMarkers(
+  list: RenderElement,
+  ordered: boolean,
+  start: number,
+): void {
+  let index = start;
   for (const child of list.children) {
     if (child.kind === 'element' && child.tag === 'li') {
       child.listMarker = ordered ? `${index}. ` : '\u2022  ';
+      child.listOrdered = ordered;
       index++;
     }
   }

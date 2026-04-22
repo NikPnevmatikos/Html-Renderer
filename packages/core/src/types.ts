@@ -26,10 +26,16 @@ export interface ResolvedStyle {
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
   lineHeight?: number;
   backgroundColor?: string;
+  margin?: number;
+  marginHorizontal?: number;
+  marginVertical?: number;
   marginTop?: number;
   marginBottom?: number;
   marginLeft?: number;
   marginRight?: number;
+  padding?: number;
+  paddingHorizontal?: number;
+  paddingVertical?: number;
   paddingTop?: number;
   paddingBottom?: number;
   paddingLeft?: number;
@@ -44,9 +50,19 @@ export interface RenderElement {
   display: 'block' | 'inline';
   style: ResolvedStyle;
   href?: string;
+  attribs?: Record<string, string>;
   listMarker?: string;
+  listOrdered?: boolean;
   colSpan?: number;
   children: RenderNode[];
+}
+
+export type StyleInput = ResolvedStyle | string;
+
+export interface HTMLElementModel {
+  display?: 'block' | 'inline';
+  tagDefaultStyle?: StyleInput;
+  isVoid?: boolean;
 }
 
 export interface RenderText {

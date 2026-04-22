@@ -1,8 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 import {
   HtmlRenderer,
   type CustomRenderer,
+  type HTMLElementModel,
+  type OnLinkPress,
+  type StyleInput,
   type TransformDom,
   type DomNode,
 } from '@html-renderer/core';
@@ -10,85 +13,129 @@ import {
 const demoHtml = `
   <h1>HtmlRenderer demo</h1>
 
-  <h2>Colors (native RN support)</h2>
-  <p style="color: rgb(220, 50, 50);">rgb() works.</p>
-  <p style="color: rgba(50, 100, 220, 0.8);">rgba() works with alpha.</p>
-  <p style="color: #d32f2f; background-color: hsl(50, 100%, 90%); padding: 6px;">hex + hsl() background.</p>
+  <h2>stylesheet prop (real CSS with selectors)</h2>
+  <article class="card">
+    <h3>Card title (type + class cascade)</h3>
+    <p>Body text inside an article.card. Styled via the <code>stylesheet</code> prop.</p>
+    <p class="note">Nested elements matched by descendants: <span class="highlight">highlighted</span>.</p>
+  </article>
 
-  <h2>Block-in-inline</h2>
-  <p>Hello <strong>bold start <div style="background-color: #ffe; padding: 8px;">this div is block-display inside strong</div> bold end</strong> rest of paragraph.</p>
+  <h2>tagsStyles / classesStyles / idsStyles</h2>
+  <p class="warning">Warning paragraph (classesStyles).</p>
+  <p id="hero">Hero paragraph (idsStyles, highest programmatic specificity).</p>
 
-  <h2>transformDom hook</h2>
-  <p>The word "REPLACE_ME" below gets replaced via transformDom: <em>REPLACE_ME</em>.</p>
+  <h2>customHTMLElementModels — define new tags</h2>
+  <my-card>
+    <p><strong>my-card</strong> is not standard HTML. We defined it via customHTMLElementModels.</p>
+  </my-card>
 
-  <h2>Code & pre</h2>
-  <p>Inline <code>const x = 42;</code> code.</p>
+  <h2>renderersProps</h2>
+  <p>Ordered list starts at 5 via <code>renderersProps.ol.startIndex</code>:</p>
+  <ol>
+    <li>Five</li>
+    <li>Six</li>
+    <li>Seven</li>
+  </ol>
+
+  <h2>onLinkPress</h2>
+  <p>
+    Tap the link:
+    <a href="https://example.com" data-track="demo" target="_blank">
+      example.com
+    </a>
+    (opens an Alert instead of the URL).
+  </p>
+
+  <h2>transformDom</h2>
+  <p>The text <em>REPLACE_ME</em> gets rewritten before render.</p>
+
+  <hr />
+
+  <h2>Core features</h2>
+  <p>Inline <code>const x = 42;</code>, <strong>bold</strong>, <em>italic</em>, <u>underlined</u>, <mark>highlighted</mark>, <s>strikethrough</s>.</p>
+
   <pre>
 function hello(name) {
   return "Hi, " + name;
 }
   </pre>
 
-  <h2>Blockquote</h2>
-  <blockquote><p>"The best way to predict the future is to invent it." — Alan Kay</p></blockquote>
+  <blockquote><p>"Make it work, make it right, make it fast." — Kent Beck</p></blockquote>
 
-  <hr />
-
-  <h2>Lists</h2>
-  <ul>
-    <li>First with <strong>bold</strong></li>
-    <li>Second
-      <ol>
-        <li>Nested ordered</li>
-        <li>Keeps numbering</li>
-      </ol>
-    </li>
-  </ul>
-
-  <h2>Tables</h2>
+  <h3>Table with colspan</h3>
   <table>
     <caption>Quarterly results</caption>
-    <thead>
-      <tr>
-        <th>Quarter</th>
-        <th>Revenue</th>
-        <th>Profit</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Quarter</th><th>Revenue</th><th>Profit</th></tr></thead>
     <tbody>
-      <tr>
-        <td>Q1</td>
-        <td>$120k</td>
-        <td>$24k</td>
-      </tr>
-      <tr>
-        <td>Q2</td>
-        <td>$140k</td>
-        <td>$31k</td>
-      </tr>
-      <tr>
-        <td>Q3</td>
-        <td>$180k</td>
-        <td>$48k</td>
-      </tr>
-      <tr>
-        <td><strong>Total</strong></td>
-        <td colspan="2"><strong>$103k profit across Q1-Q3</strong></td>
-      </tr>
+      <tr><td>Q1</td><td>$120k</td><td>$24k</td></tr>
+      <tr><td>Q2</td><td>$140k</td><td>$31k</td></tr>
+      <tr><td><strong>Total</strong></td><td colspan="2"><strong>$55k profit</strong></td></tr>
     </tbody>
   </table>
 
-  <h2>Images</h2>
+  <h3>Image (auto-fit to contentWidth)</h3>
   <img src="https://picsum.photos/seed/big/1200/600" alt="Auto-fit big image" />
-
-  <h2>Links</h2>
-  <p>Tap <a href="https://expo.dev">expo.dev</a>.</p>
 `;
 
+const stylesheet = `
+  article.card {
+    background-color: #fafbfc;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  article.card h3 {
+    color: #1a73e8;
+    margin-bottom: 6px;
+  }
+  article.card .note {
+    color: #666;
+    font-size: 13px;
+  }
+  .highlight {
+    background-color: #fff3a3;
+    padding: 2px 4px;
+  }
+`;
+
+const tagsStyles: Record<string, StyleInput> = {
+  h2: 'color: #1a73e8; margin-top: 20px; margin-bottom: 6px;',
+  p: { lineHeight: 22 },
+};
+
+const classesStyles: Record<string, StyleInput> = {
+  warning: { backgroundColor: '#fff3a3', padding: 8 },
+};
+
+const idsStyles: Record<string, StyleInput> = {
+  hero: { fontSize: 18, fontWeight: 'bold', color: '#d32f2f' },
+};
+
+const customHTMLElementModels: Record<string, HTMLElementModel> = {
+  'my-card': {
+    display: 'block',
+    tagDefaultStyle: {
+      backgroundColor: '#e6f4ff',
+      padding: 12,
+      marginVertical: 6,
+    },
+  },
+};
+
+const renderersProps = {
+  ol: { startIndex: 5 },
+};
+
 const customRenderers: Record<string, CustomRenderer> = {
-  h2: (_node, defaultRender) => (
-    <View style={styles.h2Accent}>{defaultRender()}</View>
+  hr: () => (
+    <View style={{ height: 2, backgroundColor: '#1a73e8', marginVertical: 16 }} />
   ),
+};
+
+const onLinkPress: OnLinkPress = (href, attribs) => {
+  Alert.alert(
+    'Link tapped',
+    `href: ${href}\n\nattribs: ${JSON.stringify(attribs, null, 2)}`,
+  );
 };
 
 const transformDom: TransformDom = (dom) => rewriteText(dom);
@@ -111,9 +158,17 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.container}>
         <HtmlRenderer
           html={demoHtml}
+          stylesheet={stylesheet}
+          tagsStyles={tagsStyles}
+          classesStyles={classesStyles}
+          idsStyles={idsStyles}
+          customHTMLElementModels={customHTMLElementModels}
           customRenderers={customRenderers}
+          renderersProps={renderersProps}
           contentWidth={contentWidth}
           transformDom={transformDom}
+          onLinkPress={onLinkPress}
+          textSelectable
         />
       </ScrollView>
       <StatusBar style="auto" />
@@ -130,12 +185,5 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 40,
-  },
-  h2Accent: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#1a73e8',
-    paddingLeft: 10,
-    marginTop: 16,
-    marginBottom: 4,
   },
 });
