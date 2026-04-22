@@ -1,0 +1,15 @@
+{
+  "name": "html-renderer",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*",
+    "example"
+  ],
+  "scripts": {
+    "build": "npm run build -w @html-renderer/core",
+    "dev": "npm run dev -w @html-renderer/core",
+    "typecheck": "npm run typecheck -w @html-renderer/core",
+    "test": "npm run test -w @html-renderer/core"
+  }
+}
