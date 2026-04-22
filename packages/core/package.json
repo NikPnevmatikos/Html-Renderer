@@ -1,6 +1,6 @@
 {
   "name": "@nikpnevmatikos/html-renderer",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "React Native HTML renderer in TypeScript — zero native modules, Fabric/Expo compatible. Supports tagsStyles, stylesheet with CSS selectors, custom renderers, and more.",
   "author": "NikPnevmatikos",
   "license": "MIT",
@@ -16,11 +16,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "source": "./src/index.ts",
-  "react-native": "./src/index.ts",
+  "react-native": "./dist/index.js",
   "files": [
     "dist",
-    "src",
     "README.md",
     "LICENSE"
   ],
@@ -41,7 +39,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["<rootDir>/src/**/*.test.ts"]
+    "testMatch": [
+      "<rootDir>/src/**/*.test.ts"
+    ]
   },
   "keywords": [
     "react-native",
