@@ -8,7 +8,7 @@ import {
   type StyleInput,
   type TransformDom,
   type DomNode,
-} from '@html-renderer/core';
+} from '@nikpnevmatikos/html-renderer';
 
 const demoHtml = `
   <h1>HtmlRenderer demo</h1>

@@ -1,7 +1,18 @@
 {
-  "name": "@html-renderer/core",
-  "version": "0.0.1",
-  "description": "React Native HTML renderer — pure JS, Fabric/Expo compatible",
+  "name": "@nikpnevmatikos/html-renderer",
+  "version": "0.1.0",
+  "description": "React Native HTML renderer in TypeScript — zero native modules, Fabric/Expo compatible. Supports tagsStyles, stylesheet with CSS selectors, custom renderers, and more.",
+  "author": "NikPnevmatikos",
+  "license": "MIT",
+  "homepage": "https://github.com/NikPnevmatikos/Html-Renderer#readme",
+  "bugs": {
+    "url": "https://github.com/NikPnevmatikos/Html-Renderer/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NikPnevmatikos/Html-Renderer.git",
+    "directory": "packages/core"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,8 +20,17 @@
   "react-native": "./src/index.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
@@ -28,9 +48,12 @@
     "html",
     "renderer",
     "expo",
-    "fabric"
+    "fabric",
+    "typescript",
+    "stylesheet",
+    "css",
+    "react-native-web"
   ],
-  "license": "MIT",
   "peerDependencies": {
     "react": ">=18",
     "react-native": ">=0.73"

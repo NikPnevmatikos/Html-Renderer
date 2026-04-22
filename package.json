@@ -2,14 +2,25 @@
   "name": "html-renderer",
   "private": true,
   "version": "0.0.0",
+  "description": "Monorepo for @nikpnevmatikos/html-renderer — React Native HTML renderer",
+  "author": "NikPnevmatikos",
+  "license": "MIT",
+  "homepage": "https://github.com/NikPnevmatikos/Html-Renderer#readme",
+  "bugs": {
+    "url": "https://github.com/NikPnevmatikos/Html-Renderer/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NikPnevmatikos/Html-Renderer.git"
+  },
   "workspaces": [
     "packages/*",
     "example"
   ],
   "scripts": {
-    "build": "npm run build -w @html-renderer/core",
-    "dev": "npm run dev -w @html-renderer/core",
-    "typecheck": "npm run typecheck -w @html-renderer/core",
-    "test": "npm run test -w @html-renderer/core"
+    "build": "npm run build -w @nikpnevmatikos/html-renderer",
+    "dev": "npm run dev -w @nikpnevmatikos/html-renderer",
+    "typecheck": "npm run typecheck -w @nikpnevmatikos/html-renderer",
+    "test": "npm run test -w @nikpnevmatikos/html-renderer"
   }
 }
