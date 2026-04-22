@@ -13,7 +13,7 @@ A modern React Native HTML renderer, written in TypeScript with **zero native mo
 ## Install
 
 ```bash
-npm install @html-renderer/core
+npm install @nikpnevmatikos/html-renderer
 ```
 
 Peer dependencies: `react >= 18`, `react-native >= 0.73`.
@@ -21,7 +21,7 @@ Peer dependencies: `react >= 18`, `react-native >= 0.73`.
 ## Quick start
 
 ```tsx
-import { HtmlRenderer } from '@html-renderer/core';
+import { HtmlRenderer } from '@nikpnevmatikos/html-renderer';
 
 export default function Screen() {
   return (
@@ -107,7 +107,7 @@ Not supported: pseudo-classes, pseudo-elements, attribute selectors, sibling com
 ### Custom renderer
 
 ```tsx
-import { type CustomRenderer } from '@html-renderer/core';
+import { type CustomRenderer } from '@nikpnevmatikos/html-renderer';
 
 const customRenderers: Record<string, CustomRenderer> = {
   h1: (node, defaultRender) => (
@@ -125,7 +125,7 @@ const customRenderers: Record<string, CustomRenderer> = {
 Define your own tags that behave like real HTML:
 
 ```tsx
-import { type HTMLElementModel } from '@html-renderer/core';
+import { type HTMLElementModel } from '@nikpnevmatikos/html-renderer';
 
 const customHTMLElementModels: Record<string, HTMLElementModel> = {
   'my-card': {
@@ -148,7 +148,7 @@ const customHTMLElementModels: Record<string, HTMLElementModel> = {
 ### DOM transform hook
 
 ```tsx
-import { type TransformDom } from '@html-renderer/core';
+import { type TransformDom } from '@nikpnevmatikos/html-renderer';
 
 const sanitize: TransformDom = (dom) => walk(dom);
 
@@ -167,7 +167,7 @@ function walk(nodes) {
 ### Link handling
 
 ```tsx
-import { type OnLinkPress } from '@html-renderer/core';
+import { type OnLinkPress } from '@nikpnevmatikos/html-renderer';
 
 const onLinkPress: OnLinkPress = (href, attribs) => {
   if (attribs.target === '_blank') {
@@ -232,14 +232,28 @@ HTML string
 
 Styles resolve at build time into a single `ResolvedStyle` per element. At render time, `splitStyle` partitions each style into View-applicable and Text-applicable halves and applies them to the correct component.
 
-## Limitations
+## Current limitations
+
+Actively on the roadmap:
 
 - **No `rowspan`** on tables (colspan works).
-- **No CSS units** beyond `px` — `em`, `rem`, `%` not resolved yet.
-- **No advanced CSS** — transforms, opacity, `border-radius`, individual `border-*` sides, flex/grid display modes.
-- **No SVG, no forms, no iframes** — render these via custom renderers if needed (e.g., wire `react-native-svg`).
-- **Intrinsic column widths** — table columns have equal widths (`flex: 1`); `width` on `<col>`/cells ignored.
-- **No stylesheet pseudo-classes / attribute selectors** — type, class, id, descendant, child only.
+- **CSS units** beyond `px` — `em`, `rem`, `%` not resolved yet.
+- **Forms** — `<input>`, `<textarea>`, `<button>`, `<select>` not yet rendered (planned for core, pure-JS via RN's `TextInput` / `Pressable`).
+- **Stylesheet features** — pseudo-classes (`:first-child`, `:nth-child`), attribute selectors (`[type="text"]`), and `@media` queries not yet supported.
+- **Advanced CSS** — transforms, opacity, individual `border-*` sides, `border-radius`, flex/grid display modes.
+- **Intrinsic table column widths** — columns render equal-width (`flex: 1`); `width` on `<col>` / cells is ignored.
+
+## Plugin packages (planned)
+
+Features that need native dependencies ship as separate packages so the core stays zero-native-modules. Each uses the core's `customRenderers` and `customHTMLElementModels` APIs — no core changes needed to add them.
+
+| Tags | Planned package | Native peer dep |
+|---|---|---|
+| `<iframe>` | `@nikpnevmatikos/html-renderer-webview` | `react-native-webview` |
+| `<video>`, `<audio>` | `@nikpnevmatikos/html-renderer-video` | `expo-video` or `react-native-video` |
+| `<svg>` | `@nikpnevmatikos/html-renderer-svg` | `react-native-svg` |
+
+Until these ship, you can wire any of these tags yourself via `customRenderers` — the same API the plugins will use. See the "Custom renderer" and "Custom HTML element models" examples above.
 
 ## Development
 
