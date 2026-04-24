@@ -1,6 +1,12 @@
 # Html-Renderer
 
+[![npm version](https://img.shields.io/npm/v/@nikpnevmatikos/html-renderer?color=blue&label=npm)](https://www.npmjs.com/package/@nikpnevmatikos/html-renderer)
+[![CI](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a maintained alternative to the abandoned `react-native-render-html`.
+
+> **Status:** currently in alpha (`0.1.0-alpha.2`). Install with `@alpha` tag — see below.
 
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
@@ -13,10 +19,12 @@ A modern React Native HTML renderer, written in TypeScript with **zero native mo
 ## Install
 
 ```bash
-npm install @nikpnevmatikos/html-renderer
+npm install @nikpnevmatikos/html-renderer@alpha
 ```
 
 Peer dependencies: `react >= 18`, `react-native >= 0.73`.
+
+> The `@alpha` tag is needed while the package is in prerelease. Once `0.1.0` stable is published, plain `npm install @nikpnevmatikos/html-renderer` will work.
 
 ## Quick start
 
