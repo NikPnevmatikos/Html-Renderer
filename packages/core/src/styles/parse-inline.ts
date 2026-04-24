@@ -42,6 +42,9 @@ function applyCssProperty(
     case 'font-family':
       out.fontFamily = stripFontFamilyQuotes(value);
       return;
+    case 'display':
+      if (value === 'none' || value === 'flex') out.display = value;
+      return;
     case 'font-weight': {
       if (value === 'bold' || value === 'normal') {
         out.fontWeight = value;
