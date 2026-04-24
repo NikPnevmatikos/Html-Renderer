@@ -146,6 +146,21 @@ describe('buildRenderTree', () => {
     expect(p.style.fontSize).toBe(18);
   });
 
+  it('applies display:none via classesStyles', () => {
+    const tree = buildRenderTree(
+      parseHtml('<div class="hide">hidden</div>'),
+      { classesStyles: { hide: { display: 'none' } } },
+    );
+    const div = tree[0] as RenderElement;
+    expect(div.style.display).toBe('none');
+  });
+
+  it('parses display from CSS string', () => {
+    const tree = buildRenderTree(parseHtml('<div style="display: none">x</div>'));
+    const div = tree[0] as RenderElement;
+    expect(div.style.display).toBe('none');
+  });
+
   it('applies classesStyles to matching class', () => {
     const tree = buildRenderTree(
       parseHtml('<p class="warn">x</p>'),

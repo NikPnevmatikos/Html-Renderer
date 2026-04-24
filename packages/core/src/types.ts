@@ -26,6 +26,7 @@ export interface ResolvedStyle {
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
   lineHeight?: number;
   backgroundColor?: string;
+  display?: 'flex' | 'none';
   margin?: number;
   marginHorizontal?: number;
   marginVertical?: number;

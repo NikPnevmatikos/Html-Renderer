@@ -17,6 +17,7 @@ const TEXT_KEYS = [
 ] as const;
 
 const VIEW_KEYS = [
+  'display',
   'margin',
   'marginHorizontal',
   'marginVertical',

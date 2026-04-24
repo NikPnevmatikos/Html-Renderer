@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-04-22
+
+### Fixed
+
+- `display: 'none'` now correctly hides elements. Previously dropped during style splitting; the property is now routed to the underlying `<View>` style as RN expects. Affects both `classesStyles`/`idsStyles`/`tagsStyles` object values and inline CSS strings.
+
+### Added
+
+- `display` CSS property support (`flex` and `none` — RN's supported values).
+
 ## [0.1.0] - 2026-04-22
 
 ### Added
