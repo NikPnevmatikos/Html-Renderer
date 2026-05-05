@@ -6,7 +6,7 @@
 
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a maintained alternative to the abandoned `react-native-render-html`.
 
-> **Status:** currently in alpha (`0.1.0-alpha.2`). Install with `@alpha` tag — see below.
+> **Status:** currently in alpha (`0.1.0-alpha.3`). Install with `@alpha` tag — see below.
 
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
