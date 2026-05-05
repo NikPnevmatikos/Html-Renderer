@@ -24,8 +24,11 @@ export interface ResolvedStyle {
     | 'line-through'
     | 'underline line-through';
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  letterSpacing?: number;
   lineHeight?: number;
   backgroundColor?: string;
+  opacity?: number;
   display?: 'flex' | 'none';
   margin?: number;
   marginHorizontal?: number;
@@ -41,6 +44,28 @@ export interface ResolvedStyle {
   paddingBottom?: number;
   paddingLeft?: number;
   paddingRight?: number;
+  borderRadius?: number;
+  borderTopLeftRadius?: number;
+  borderTopRightRadius?: number;
+  borderBottomLeftRadius?: number;
+  borderBottomRightRadius?: number;
+  borderWidth?: number;
+  borderTopWidth?: number;
+  borderRightWidth?: number;
+  borderBottomWidth?: number;
+  borderLeftWidth?: number;
+  borderColor?: string;
+  borderTopColor?: string;
+  borderRightColor?: string;
+  borderBottomColor?: string;
+  borderLeftColor?: string;
+  borderStyle?: 'solid' | 'dashed' | 'dotted';
+  width?: number | string;
+  minWidth?: number | string;
+  maxWidth?: number | string;
+  height?: number | string;
+  minHeight?: number | string;
+  maxHeight?: number | string;
 }
 
 export type RenderNode = RenderElement | RenderText | RenderImage;

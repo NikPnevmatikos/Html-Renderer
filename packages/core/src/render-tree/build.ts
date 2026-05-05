@@ -42,7 +42,54 @@ const BLOCK_TAGS = new Set([
   'th',
   'td',
   'caption',
+  'article',
+  'aside',
+  'header',
+  'footer',
+  'main',
+  'nav',
+  'section',
+  'figure',
+  'figcaption',
+  'address',
+  'dl',
+  'dt',
+  'dd',
 ]);
+
+const KNOWN_TAGS = new Set<string>([
+  // block / sectioning
+  'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'ul', 'ol', 'li', 'pre', 'blockquote', 'hr',
+  'article', 'aside', 'footer', 'header', 'main', 'nav', 'section',
+  'address', 'figure', 'figcaption', 'dl', 'dt', 'dd',
+  // tables
+  'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
+  'col', 'colgroup',
+  // inline / phrasing
+  'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code',
+  'data', 'dfn', 'em', 'i', 'kbd', 'mark', 'q',
+  's', 'samp', 'small', 'span', 'strong', 'sub', 'sup',
+  'time', 'u', 'var', 'wbr',
+  'del', 'ins', 'strike', 'big', 'tt', 'font',
+  // embedded
+  'img', 'audio', 'video', 'picture', 'source', 'track',
+  // document root (defensive — full-doc HTML)
+  'html', 'head', 'body',
+]);
+
+const warnedTags = new Set<string>();
+
+function warnUnsupportedTag(tag: string): void {
+  if (warnedTags.has(tag)) return;
+  warnedTags.add(tag);
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[html-renderer] The "${tag}" tag is a valid HTML element but is not handled by this library. ` +
+      `Add it to "customHTMLElementModels" to specify how it should be rendered, ` +
+      `or to "ignoredDomTags" to skip it.`,
+  );
+}
 
 const INHERITED_PROPS = [
   'color',
@@ -51,6 +98,8 @@ const INHERITED_PROPS = [
   'fontWeight',
   'fontStyle',
   'textAlign',
+  'textTransform',
+  'letterSpacing',
   'textDecorationLine',
   'lineHeight',
 ] as const;
@@ -196,6 +245,9 @@ function buildElement(
   }
 
   const customModel = ctx.customHTMLElementModels[el.name];
+  if (!customModel && !KNOWN_TAGS.has(el.name)) {
+    warnUnsupportedTag(el.name);
+  }
   const tagDefault = resolveTagDefault(el.name, customModel);
 
   const elInfo: ElementInfo = {
@@ -223,6 +275,7 @@ function buildElement(
 
   const isVoid = customModel?.isVoid === true;
   const childAncestors = [...ancestors, elInfo];
+  const inheritedForChildren = pickInherited(resolved);
 
   const element: RenderElement = {
     kind: 'element',
@@ -232,7 +285,7 @@ function buildElement(
     children: isVoid
       ? []
       : el.children
-          .map((c) => buildNode(c, resolved, childPreserve, ctx, childAncestors))
+          .map((c) => buildNode(c, inheritedForChildren, childPreserve, ctx, childAncestors))
           .filter((c): c is RenderNode => c !== null),
   };
 
