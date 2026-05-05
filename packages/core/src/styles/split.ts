@@ -13,6 +13,8 @@ const TEXT_KEYS = [
   'fontStyle',
   'textDecorationLine',
   'textAlign',
+  'textTransform',
+  'letterSpacing',
   'lineHeight',
 ] as const;
 
@@ -32,6 +34,28 @@ const VIEW_KEYS = [
   'paddingBottom',
   'paddingLeft',
   'paddingRight',
+  'borderRadius',
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomLeftRadius',
+  'borderBottomRightRadius',
+  'borderWidth',
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+  'borderColor',
+  'borderTopColor',
+  'borderRightColor',
+  'borderBottomColor',
+  'borderLeftColor',
+  'borderStyle',
+  'width',
+  'minWidth',
+  'maxWidth',
+  'height',
+  'minHeight',
+  'maxHeight',
 ] as const;
 
 export interface StyleSplit {
@@ -57,6 +81,10 @@ export function splitStyle(style: ResolvedStyle): StyleSplit {
   if (style.backgroundColor !== undefined) {
     view.backgroundColor = style.backgroundColor;
     text.backgroundColor = style.backgroundColor;
+  }
+  if (style.opacity !== undefined) {
+    view.opacity = style.opacity;
+    text.opacity = style.opacity;
   }
 
   return { view, text };

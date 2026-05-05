@@ -10,7 +10,7 @@ A modern React Native HTML renderer, written in TypeScript with **zero native mo
 
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
-- **Real CSS stylesheet support** — a `stylesheet` prop that accepts actual CSS with selectors and specificity. (`react-native-render-html` doesn't do this.)
+- **Real CSS stylesheet support** — a `stylesheet` prop that accepts actual CSS with selectors and specificity.
 - Transient render tree model: HTML → DOM → resolved render tree → `<Text>` / `<View>` / `<Image>`.
 - Full style inheritance, CSS cascade, and the box-model basics.
 - Extensible via custom renderers, custom element models, DOM transform hooks, and per-renderer config.
