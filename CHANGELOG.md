@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2026-07-09
+
+### Added
+
+- Entity-encoded HTML support: input that is fully HTML-escaped (e.g. `&amp;lt;p&amp;gt;hello&amp;lt;/p&amp;gt;`, as returned by some CMS/API backends) is now auto-detected, decoded, and rendered as HTML instead of showing literal markup. Double-encoded input is handled too. Input containing any real tag is left untouched, so intentional escaped text like `<p>&amp;lt;b&amp;gt;</p>` still renders literally.
+- `entities` is now a direct dependency (was already present transitively via `htmlparser2`).
+
+## [0.1.0-alpha.3] - 2026-05-05
+
+### Fixed
+
+- CSS inheritance: children now inherit only inheritable text properties (`color`, `font-*`, `text-align`, `text-decoration-line`, `text-transform`, `letter-spacing`, `line-height`). Previously the parent's fully resolved style — including box properties such as margins, padding, and borders — leaked into children.
+
+### Added
+
+- HTML5 sectioning/semantic tags rendered as blocks by default: `article`, `aside`, `header`, `footer`, `main`, `nav`, `section`, `figure`, `figcaption`, `address`, `dl`, `dt`, `dd`.
+- New CSS properties: the `border` family (shorthands, per-side widths/colors, `border-style`, `border-radius` including per-corner), `width`/`height` with `min-`/`max-` variants, `opacity`, `text-transform`, `letter-spacing`.
+- One-time console warning for valid HTML tags the library doesn't handle, with a hint to register them via `customHTMLElementModels` or skip them via `ignoredDomTags`.
+
 ## [0.1.0-alpha.2] - 2026-04-22
 
 ### Fixed

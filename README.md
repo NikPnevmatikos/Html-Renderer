@@ -6,7 +6,7 @@
 
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a maintained alternative to the abandoned `react-native-render-html`.
 
-> **Status:** currently in alpha (`0.1.0-alpha.3`). Install with `@alpha` tag — see below.
+> **Status:** currently in alpha (`0.1.0-alpha.4`). Install with `@alpha` tag — see below.
 
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
@@ -14,6 +14,7 @@ A modern React Native HTML renderer, written in TypeScript with **zero native mo
 - Transient render tree model: HTML → DOM → resolved render tree → `<Text>` / `<View>` / `<Image>`.
 - Full style inheritance, CSS cascade, and the box-model basics.
 - Extensible via custom renderers, custom element models, DOM transform hooks, and per-renderer config.
+- **Entity-encoded HTML** (`&lt;p&gt;hello&lt;/p&gt;` from CMS/API backends, even double-encoded) is auto-detected and rendered as HTML — no pre-decoding needed.
 - 100+ unit tests, typed end-to-end.
 
 ## Install
