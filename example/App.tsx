@@ -11,7 +11,70 @@ import {
 } from '@nikpnevmatikos/html-renderer';
 
 const demoHtml = `
-<p>The conference presents the key technological trends shaping the modern digital era, covering topics such as artificial intelligence, cybersecurity, and innovation. Its aim is to inform, encourage the exchange of ideas, and connect technology with real-world application.</p>
+  <h1>HtmlRenderer demo</h1>
+
+  <h2>stylesheet prop (real CSS with selectors)</h2>
+  <article class="card">
+    <h3>Card title (type + class cascade)</h3>
+    <p>Body text inside an article.card. Styled via the <code>stylesheet</code> prop.</p>
+    <p class="note">Nested elements matched by descendants: <span class="highlight">highlighted</span>.</p>
+  </article>
+
+  <h2>tagsStyles / classesStyles / idsStyles</h2>
+  <p class="warning">Warning paragraph (classesStyles).</p>
+  <p id="hero">Hero paragraph (idsStyles, highest programmatic specificity).</p>
+
+  <h2>customHTMLElementModels — define new tags</h2>
+  <my-card>
+    <p><strong>my-card</strong> is not standard HTML. We defined it via customHTMLElementModels.</p>
+  </my-card>
+
+  <h2>renderersProps</h2>
+  <p>Ordered list starts at 5 via <code>renderersProps.ol.startIndex</code>:</p>
+  <ol>
+    <li>Five</li>
+    <li>Six</li>
+    <li>Seven</li>
+  </ol>
+
+  <h2>onLinkPress</h2>
+  <p>
+    Tap the link:
+    <a href="https://example.com" data-track="demo" target="_blank">
+      example.com
+    </a>
+    (opens an Alert instead of the URL).
+  </p>
+
+  <h2>transformDom</h2>
+  <p>The text <em>REPLACE_ME</em> gets rewritten before render.</p>
+
+  <hr />
+
+  <h2>Core features</h2>
+  <p>Inline <code>const x = 42;</code>, <strong>bold</strong>, <em>italic</em>, <u>underlined</u>, <mark>highlighted</mark>, <s>strikethrough</s>.</p>
+
+  <pre>
+function hello(name) {
+  return "Hi, " + name;
+}
+  </pre>
+
+  <blockquote><p>"Make it work, make it right, make it fast." — Kent Beck</p></blockquote>
+
+  <h3>Table with colspan</h3>
+  <table>
+    <caption>Quarterly results</caption>
+    <thead><tr><th>Quarter</th><th>Revenue</th><th>Profit</th></tr></thead>
+    <tbody>
+      <tr><td>Q1</td><td>$120k</td><td>$24k</td></tr>
+      <tr><td>Q2</td><td>$140k</td><td>$31k</td></tr>
+      <tr><td><strong>Total</strong></td><td colspan="2"><strong>$55k profit</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Image (auto-fit to contentWidth)</h3>
+  <img src="https://picsum.photos/seed/big/1200/600" alt="Auto-fit big image" />
 `;
 
 const stylesheet = `
@@ -37,12 +100,7 @@ const stylesheet = `
 const tagsStyles: Record<string, StyleInput> = {
   h2: 'color: #1a73e8; margin-top: 20px; margin-bottom: 6px;',
   p: { lineHeight: 22 },
-  body: {
-        whiteSpace: 'normal',
-        color: 'white'
-      },
 };
-
 
 const classesStyles: Record<string, StyleInput> = {
   warning: { backgroundColor: '#fff3a3', padding: 8 },
@@ -121,7 +179,7 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: 'blue',
+    backgroundColor: '#fff',
   },
   container: {
     paddingTop: 60,
