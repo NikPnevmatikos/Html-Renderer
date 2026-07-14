@@ -21,3 +21,5 @@ export type {
 export { parseHtml } from './parser/parse';
 export { buildRenderTree } from './render-tree/build';
 export { parseInlineStyle } from './styles/parse-inline';
+export { resolveRootStyle, ROOT_DEFAULT_STYLE } from './styles/root';
+export type { RootStyleOptions } from './styles/root';

@@ -20,7 +20,8 @@ import type {
   StyleInput,
 } from '../types';
 import { parseHtml } from '../parser/parse';
-import { buildRenderTree } from '../render-tree/build';
+import { buildRenderTree, treeContainsTag } from '../render-tree/build';
+import { resolveRootStyle } from '../styles/root';
 import { splitStyle } from '../styles/split';
 import { RenderedImage } from './RenderedImage';
 
@@ -71,7 +72,6 @@ interface RenderCtx {
   defaultViewProps: ViewProps;
 }
 
-const ROOT_STYLE: ResolvedStyle = { color: '#000000', fontSize: 14 };
 const EMPTY_CUSTOM: Record<string, CustomRenderer> = {};
 const EMPTY_RENDERERS_PROPS: Record<string, Record<string, unknown>> = {};
 const EMPTY_TEXT_PROPS: TextProps = {};
@@ -97,10 +97,10 @@ export function HtmlRenderer({
   defaultViewProps,
   textSelectable,
 }: HtmlRendererProps): React.ReactElement {
-  const tree = React.useMemo(() => {
+  const { tree, hasBodyElement } = React.useMemo(() => {
     const parsed = parseHtml(html);
     const dom = transformDom ? transformDom(parsed) : parsed;
-    return buildRenderTree(dom, {
+    const builtTree = buildRenderTree(dom, {
       baseStyle,
       tagsStyles,
       classesStyles,
@@ -111,6 +111,10 @@ export function HtmlRenderer({
       customHTMLElementModels,
       renderersProps,
     });
+    return {
+      tree: builtTree,
+      hasBodyElement: treeContainsTag(builtTree, 'body'),
+    };
   }, [
     html,
     baseStyle,
@@ -140,10 +144,22 @@ export function HtmlRenderer({
     defaultTextProps: mergedTextProps,
     defaultViewProps: mergedViewProps,
   };
-  const parentStyle = { ...ROOT_STYLE, ...(baseStyle ?? {}) };
+  const rootStyle = React.useMemo(
+    () => resolveRootStyle({ baseStyle, tagsStyles }),
+    [baseStyle, tagsStyles],
+  );
+  // A literal <body> element receives tagsStyles.body itself — the root View
+  // then takes only the baseStyle box props so padding/background/etc. are
+  // not applied twice.
+  const rootViewStyle = React.useMemo(
+    () =>
+      splitStyle(hasBodyElement ? resolveRootStyle({ baseStyle }) : rootStyle)
+        .view,
+    [hasBodyElement, baseStyle, rootStyle],
+  );
   return (
-    <View {...mergedViewProps}>
-      {renderBlockChildren(tree, parentStyle, ctx)}
+    <View {...mergedViewProps} style={[mergedViewProps.style, rootViewStyle]}>
+      {renderBlockChildren(tree, rootStyle, ctx)}
     </View>
   );
 }
@@ -252,6 +268,15 @@ function renderBlockDefault(
   if (el.tag === 'hr') {
     return (
       <View key={key} {...ctx.defaultViewProps} style={[styles.hr, vStyle]} />
+    );
+  }
+
+  // Document containers: plain wrappers without the default block margin.
+  if (el.tag === 'html' || el.tag === 'body') {
+    return (
+      <View key={key} {...ctx.defaultViewProps} style={vStyle}>
+        {renderBlockChildren(el.children, el.style, ctx)}
+      </View>
     );
   }
 

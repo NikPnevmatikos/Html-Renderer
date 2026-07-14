@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-14
+
+First stable (non-prerelease) release.
+
+### Added
+
+- `tagsStyles.body` now styles the document root even when the source HTML has no `<body>` element, as if the content were wrapped in a synthetic body. Inherited text properties (`color`, `font-*`, …) cascade into all content; box properties (background, padding, margin, borders) are applied once to the root container. The common `tagsStyles: { body: { color } }` pattern for setting the root text color now works as expected.
+- Full-document HTML handling: literal `<html>`/`<body>` elements render as plain block containers (no default block margin), and `head`, `title`, `style`, `script`, `link`, `meta`, `base` are ignored by default (merged with any user-provided `ignoredDomTags`). Previously a full document rendered its `<title>` text and raw `<style>`/`<script>` source as visible content.
+- New exports: `resolveRootStyle` / `ROOT_DEFAULT_STYLE` — the root-style resolution used by the renderer, for headless `buildRenderTree` consumers.
+
+### Changed
+
+- Box properties in `baseStyle` (and `tagsStyles.body`) no longer leak into every top-level element's resolved style; they now style the single root container. Same rationale as the 0.1.0-alpha.3 inheritance fix, applied to the root level. If you relied on `baseStyle.padding`/`backgroundColor` stamping each top-level block, the visual result is now one padded/painted wrapper instead.
+
 ## [0.1.0-alpha.4] - 2026-07-09
 
 ### Added
