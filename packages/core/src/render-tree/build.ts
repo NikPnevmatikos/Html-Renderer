@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { parseInlineStyle } from '../styles/parse-inline';
 import { normalizeStyleInput, normalizeStyleMap } from '../styles/normalize';
+import { resolveRootStyle } from '../styles/root';
 import { parseStylesheet, type CssRule } from '../styles/css-parser';
 import {
   matchSelector,
@@ -55,6 +56,9 @@ const BLOCK_TAGS = new Set([
   'dl',
   'dt',
   'dd',
+  // document containers — kept as plain block wrappers for full-document HTML
+  'html',
+  'body',
 ]);
 
 const KNOWN_TAGS = new Set<string>([
@@ -77,6 +81,19 @@ const KNOWN_TAGS = new Set<string>([
   // document root (defensive — full-doc HTML)
   'html', 'head', 'body',
 ]);
+
+// Non-rendered document tags, always merged with the user's ignoredDomTags.
+// Without these, full-document HTML would render <title> text and raw
+// <style>/<script> source as visible content.
+const DEFAULT_IGNORED_DOM_TAGS = [
+  'head',
+  'title',
+  'style',
+  'script',
+  'link',
+  'meta',
+  'base',
+];
 
 const warnedTags = new Set<string>();
 
@@ -129,11 +146,6 @@ const DEFAULT_TAG_STYLES: Record<string, ResolvedStyle> = {
   caption: { fontWeight: 'bold', textAlign: 'center' },
 };
 
-const BASE_STYLE: ResolvedStyle = {
-  color: '#000000',
-  fontSize: 14,
-};
-
 export interface BuildOptions {
   baseStyle?: ResolvedStyle;
   tagsStyles?: Record<string, StyleInput>;
@@ -175,14 +187,18 @@ export function buildRenderTree(
   dom: DomNode[],
   options: BuildOptions = {},
 ): RenderNode[] {
-  const rootStyle: ResolvedStyle = { ...BASE_STYLE, ...(options.baseStyle ?? {}) };
+  // Inherited half only: box props from baseStyle / tagsStyles.body belong to
+  // the single root container (styled by the renderer), not to every
+  // top-level element.
+  const rootStyle = pickInherited(resolveRootStyle(options));
   const ctx: BuildCtx = {
     tagsStyles: normalizeStyleMap(options.tagsStyles),
     classesStyles: normalizeStyleMap(options.classesStyles),
     idsStyles: normalizeStyleMap(options.idsStyles),
-    ignoredDomTags: new Set(
-      (options.ignoredDomTags ?? []).map((t) => t.toLowerCase()),
-    ),
+    ignoredDomTags: new Set([
+      ...DEFAULT_IGNORED_DOM_TAGS,
+      ...(options.ignoredDomTags ?? []).map((t) => t.toLowerCase()),
+    ]),
     ignoredStyleKeys: buildIgnoredStyleKeys(options.ignoredStyles),
     customHTMLElementModels: options.customHTMLElementModels ?? {},
     renderersProps: options.renderersProps ?? {},
@@ -453,4 +469,13 @@ function pickInherited(style: ResolvedStyle): ResolvedStyle {
     }
   }
   return out;
+}
+
+export function treeContainsTag(nodes: RenderNode[], tag: string): boolean {
+  for (const n of nodes) {
+    if (n.kind !== 'element') continue;
+    if (n.tag === tag) return true;
+    if (treeContainsTag(n.children, tag)) return true;
+  }
+  return false;
 }

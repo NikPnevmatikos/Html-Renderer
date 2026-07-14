@@ -6,8 +6,6 @@
 
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a maintained alternative to the abandoned `react-native-render-html`.
 
-> **Status:** currently in alpha (`0.1.0-alpha.4`). Install with `@alpha` tag — see below.
-
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
 - **Real CSS stylesheet support** — a `stylesheet` prop that accepts actual CSS with selectors and specificity.
@@ -15,17 +13,15 @@ A modern React Native HTML renderer, written in TypeScript with **zero native mo
 - Full style inheritance, CSS cascade, and the box-model basics.
 - Extensible via custom renderers, custom element models, DOM transform hooks, and per-renderer config.
 - **Entity-encoded HTML** (`&lt;p&gt;hello&lt;/p&gt;` from CMS/API backends, even double-encoded) is auto-detected and rendered as HTML — no pre-decoding needed.
-- 100+ unit tests, typed end-to-end.
+- 130+ unit tests, typed end-to-end.
 
 ## Install
 
 ```bash
-npm install @nikpnevmatikos/html-renderer@alpha
+npm install @nikpnevmatikos/html-renderer
 ```
 
 Peer dependencies: `react >= 18`, `react-native >= 0.73`.
-
-> The `@alpha` tag is needed while the package is in prerelease. Once `0.1.0` stable is published, plain `npm install @nikpnevmatikos/html-renderer` will work.
 
 ## Quick start
 
@@ -46,9 +42,9 @@ export default function Screen() {
 | Prop | Type | Description |
 |---|---|---|
 | `html` | `string` | The HTML source to render. |
-| `baseStyle` | `ResolvedStyle` | Root style inherited by all content. |
+| `baseStyle` | `ResolvedStyle` | Root style. Inherited text props cascade to all content; box props (background, padding, …) style the root container. |
 | `stylesheet` | `string` | A CSS stylesheet with real selectors (type, class, id, descendant, child). |
-| `tagsStyles` | `Record<tag, StyleInput>` | Per-tag style override (`{ h1: {...} }`). |
+| `tagsStyles` | `Record<tag, StyleInput>` | Per-tag style override (`{ h1: {...} }`). `body` is special: it styles the document root even when the HTML is a fragment with no `<body>` tag — see below. |
 | `classesStyles` | `Record<class, StyleInput>` | Style by `class` attribute. |
 | `idsStyles` | `Record<id, StyleInput>` | Style by `id` attribute. |
 | `customRenderers` | `Record<tag, CustomRenderer>` | Replace or wrap the renderer for any tag. |
@@ -57,7 +53,7 @@ export default function Screen() {
 | `contentWidth` | `number` | Max render width. Images wider than this scale down proportionally. |
 | `transformDom` | `(dom: DomNode[]) => DomNode[]` | Runs after parse, before build. Use for sanitization or tag rewrites. |
 | `onLinkPress` | `(href, attribs) => void` | Override the default `Linking.openURL` link handler. |
-| `ignoredDomTags` | `string[]` | Tags to drop during parse (subtree removed). |
+| `ignoredDomTags` | `string[]` | Tags to drop during parse (subtree removed). Merged with the built-in defaults: `head`, `title`, `style`, `script`, `link`, `meta`, `base`. |
 | `ignoredStyles` | `string[]` | CSS properties to drop. Accepts kebab-case (`background-color`) or camelCase (`backgroundColor`). |
 | `defaultTextProps` | `TextProps` | Spread onto every `<Text>`. |
 | `defaultViewProps` | `ViewProps` | Spread onto every `<View>`. |
@@ -78,14 +74,30 @@ tagsStyles={{
 
 **Inline:** `span`, `strong`/`b`, `em`/`i`, `u`, `s`/`del`/`strike`, `ins`, `mark`, `small`, `code`, `a`, `br`, `img`.
 
+**Documents:** full-document HTML works too — literal `<html>`/`<body>` render as plain block containers, and `<head>`, `<title>`, `<style>`, `<script>`, `<link>`, `<meta>`, `<base>` are ignored by default.
+
 ## Supported CSS
 
-- Typography: `color`, `font-size` (px), `font-family`, `font-weight`, `font-style`, `text-align`, `text-decoration`, `line-height` (px)
-- Box model: `margin` (shorthand + individual sides), `padding` (shorthand + individual sides), `background-color`
+- Typography: `color`, `font-size` (px), `font-family`, `font-weight`, `font-style`, `text-align`, `text-decoration`, `text-transform`, `letter-spacing`, `line-height` (px)
+- Box model: `margin` / `padding` (shorthands + individual sides), `background-color`, the `border` family (shorthands, per-side widths/colors, `border-style`, `border-radius` including per-corner), `width`/`height` with `min-`/`max-` variants
+- Other: `opacity`, `display` (`flex` and `none`)
 - Colors: hex, `rgb()`, `rgba()`, `hsl()`, named (passed through to RN's color system)
-- Units: **`px` only** for now — `em`/`rem`/`%` are not resolved yet
+- Units: **`px` only** for now — `em`/`rem` are not resolved yet, and `%` works only on `width`/`height`
 
 ## Examples
+
+### Root styles — `baseStyle` and `tagsStyles.body`
+
+`tagsStyles.body` styles the document root even when the source HTML is a fragment with no `<body>` element — as if the content were wrapped in a synthetic body. Inherited text properties cascade into all content; box properties are applied once to the root container. This makes it the natural way to set the root text color:
+
+```tsx
+<HtmlRenderer
+  html="<p>Hello</p>"
+  tagsStyles={{ body: { color: 'white' } }}  // text renders white
+/>
+```
+
+`baseStyle` does the same thing one rung lower in the cascade (`tagsStyles.body` wins where both set a property). If the HTML contains a literal `<body>` tag, `tagsStyles.body` is applied on that element instead, so box props are never applied twice.
 
 ### `stylesheet` — real CSS with selectors
 
@@ -218,13 +230,16 @@ From lowest to highest priority:
 
 ```
 1. baseStyle                         (HtmlRenderer prop — root defaults)
-2. Built-in tag defaults             (h1 bold, strong bold, etc.)
-3. stylesheet matches                (by selector specificity + source order)
-4. tagsStyles                        (per-tag programmatic override)
-5. classesStyles                     (by matched class)
-6. idsStyles                         (by matched id)
-7. Inline style="..."                (highest — HTML inline always wins)
+2. tagsStyles.body                   (document root — applies even without a <body> tag)
+3. Built-in tag defaults             (h1 bold, strong bold, etc.)
+4. stylesheet matches                (by selector specificity + source order)
+5. tagsStyles                        (per-tag programmatic override)
+6. classesStyles                     (by matched class)
+7. idsStyles                         (by matched id)
+8. Inline style="..."                (highest — HTML inline always wins)
 ```
+
+Root styles (1–2) reach descendants through inheritance, so only inherited text properties cascade down — and any element-level match (3–8) overrides them.
 
 ## How it works
 
@@ -246,10 +261,10 @@ Styles resolve at build time into a single `ResolvedStyle` per element. At rende
 Actively on the roadmap:
 
 - **No `rowspan`** on tables (colspan works).
-- **CSS units** beyond `px` — `em`, `rem`, `%` not resolved yet.
+- **CSS units** beyond `px` — `em`, `rem` not resolved yet; `%` only on `width`/`height`.
 - **Forms** — `<input>`, `<textarea>`, `<button>`, `<select>` not yet rendered (planned for core, pure-JS via RN's `TextInput` / `Pressable`).
 - **Stylesheet features** — pseudo-classes (`:first-child`, `:nth-child`), attribute selectors (`[type="text"]`), and `@media` queries not yet supported.
-- **Advanced CSS** — transforms, opacity, individual `border-*` sides, `border-radius`, flex/grid display modes.
+- **Advanced CSS** — transforms, flex/grid layout of HTML content.
 - **Intrinsic table column widths** — columns render equal-width (`flex: 1`); `width` on `<col>` / cells is ignored.
 
 ## Plugin packages (planned)
@@ -269,7 +284,7 @@ Until these ship, you can wire any of these tags yourself via `customRenderers` 
 ```bash
 npm install           # installs all workspace deps
 npm run dev           # tsc --watch on core
-npm test              # jest — 100+ tests
+npm test              # jest — 130+ tests
 npm run typecheck     # tsc --noEmit on core
 npm run build         # build core to dist
 

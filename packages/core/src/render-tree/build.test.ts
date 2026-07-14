@@ -1,4 +1,4 @@
-import { buildRenderTree } from './build';
+import { buildRenderTree, treeContainsTag } from './build';
 import { parseHtml } from '../parser/parse';
 import type { RenderElement, RenderText, RenderImage } from '../types';
 
@@ -428,5 +428,153 @@ describe('buildRenderTree', () => {
       target: '_blank',
       'data-track': 'home',
     });
+  });
+});
+
+describe('tagsStyles.body as document root style', () => {
+  it('inherits body color into fragment content without a <body> element', () => {
+    const tree = buildRenderTree(parseHtml('<p>hello</p>'), {
+      tagsStyles: { body: { color: 'white' } },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('white');
+    expect((p.children[0] as RenderText).style.color).toBe('white');
+  });
+
+  it('body inherits into bare top-level text nodes', () => {
+    const tree = buildRenderTree(parseHtml('just text'), {
+      tagsStyles: { body: { color: 'white' } },
+    });
+    const t = tree[0] as RenderText;
+    expect(t.style.color).toBe('white');
+  });
+
+  it('tagsStyles.body overrides baseStyle at the root', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      baseStyle: { color: 'red' },
+      tagsStyles: { body: { color: 'white' } },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('white');
+  });
+
+  it('body box props do not leak into top-level elements', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      tagsStyles: {
+        body: { color: 'white', padding: 16, backgroundColor: 'blue' },
+      },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('white');
+    expect(p.style.padding).toBeUndefined();
+    expect(p.style.backgroundColor).toBeUndefined();
+  });
+
+  it('baseStyle box props do not leak into top-level elements', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      baseStyle: { color: 'red', padding: 16 },
+    });
+    const p = tree[0] as RenderElement;
+    expect(p.style.color).toBe('red');
+    expect(p.style.padding).toBeUndefined();
+  });
+
+  it('tag defaults still beat the inherited body color', () => {
+    const tree = buildRenderTree(parseHtml('<p><a href="/x">link</a></p>'), {
+      tagsStyles: { body: { color: 'white' } },
+    });
+    const p = tree[0] as RenderElement;
+    const a = p.children[0] as RenderElement;
+    expect(p.style.color).toBe('white');
+    expect(a.style.color).toBe('#1a73e8');
+  });
+
+  it('element-level styles still beat the inherited body color', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="warn">x</p><p style="color: inline">y</p>'),
+      {
+        tagsStyles: { body: { color: 'white' } },
+        classesStyles: { warn: { color: 'orange' } },
+      },
+    );
+    expect((tree[0] as RenderElement).style.color).toBe('orange');
+    expect((tree[1] as RenderElement).style.color).toBe('inline');
+  });
+
+  it('accepts tagsStyles.body as a CSS string', () => {
+    const tree = buildRenderTree(parseHtml('<p>x</p>'), {
+      tagsStyles: { body: 'color: white' },
+    });
+    expect((tree[0] as RenderElement).style.color).toBe('white');
+  });
+});
+
+describe('full-document HTML', () => {
+  it('renders a literal <body> as a block that matches tagsStyles.body', () => {
+    const tree = buildRenderTree(parseHtml('<body><p>x</p></body>'), {
+      tagsStyles: { body: { color: 'white', padding: 16 } },
+    });
+    const body = tree[0] as RenderElement;
+    expect(body.tag).toBe('body');
+    expect(body.display).toBe('block');
+    expect(body.style.color).toBe('white');
+    expect(body.style.padding).toBe(16);
+    const p = body.children[0] as RenderElement;
+    expect(p.style.color).toBe('white');
+    expect(p.style.padding).toBeUndefined();
+  });
+
+  it('inline style on a literal <body> wins over tagsStyles.body', () => {
+    const tree = buildRenderTree(
+      parseHtml('<body style="color: teal; padding: 4px"><p>x</p></body>'),
+      { tagsStyles: { body: { color: 'white', padding: 16 } } },
+    );
+    const body = tree[0] as RenderElement;
+    expect(body.style.color).toBe('teal');
+    // Inline CSS padding shorthand expands to per-side values, which RN
+    // resolves over the object-form `padding` from tagsStyles.
+    expect(body.style.paddingTop).toBe(4);
+    expect(body.style.paddingLeft).toBe(4);
+  });
+
+  it('drops head/title/style/script by default and keeps content', () => {
+    const tree = buildRenderTree(
+      parseHtml(
+        '<html><head><title>T</title><style>p{color:red}</style>' +
+          '<script>var x=1</script></head><body><p>hello</p></body></html>',
+      ),
+    );
+    expect(tree).toHaveLength(1);
+    const htmlEl = tree[0] as RenderElement;
+    expect(htmlEl.tag).toBe('html');
+    expect(htmlEl.display).toBe('block');
+    const body = htmlEl.children[0] as RenderElement;
+    expect(body.tag).toBe('body');
+    const p = body.children[0] as RenderElement;
+    expect((p.children[0] as RenderText).text).toBe('hello');
+  });
+
+  it('drops stray style/script/meta outside head too', () => {
+    const tree = buildRenderTree(
+      parseHtml('<style>p{color:red}</style><meta charset="utf-8"><p>x</p>'),
+    );
+    expect(tree).toHaveLength(1);
+    expect((tree[0] as RenderElement).tag).toBe('p');
+  });
+
+  it('merges user ignoredDomTags with the defaults', () => {
+    const tree = buildRenderTree(
+      parseHtml('<title>T</title><iframe>drop</iframe><p>x</p>'),
+      { ignoredDomTags: ['iframe'] },
+    );
+    expect(tree).toHaveLength(1);
+    expect((tree[0] as RenderElement).tag).toBe('p');
+  });
+
+  it('treeContainsTag finds a nested body and rejects absent tags', () => {
+    const doc = buildRenderTree(parseHtml('<html><body><p>x</p></body></html>'));
+    expect(treeContainsTag(doc, 'body')).toBe(true);
+    const fragment = buildRenderTree(parseHtml('<p>x</p>'));
+    expect(treeContainsTag(fragment, 'body')).toBe(false);
   });
 });
