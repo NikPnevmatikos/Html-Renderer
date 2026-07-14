@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-14
+
+No library changes — republish of 0.2.0 after a repo-only CI fix in the example app. The shipped package is functionally identical to 0.2.0.
+
 ## [0.2.0] - 2026-07-14
 
 First stable (non-prerelease) release.
