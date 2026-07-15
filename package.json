@@ -18,9 +18,9 @@
     "example"
   ],
   "scripts": {
-    "build": "npm run build -w @nikpnevmatikos/html-renderer",
+    "build": "npm run build -w @nikpnevmatikos/html-renderer && npm run build -w @nikpnevmatikos/html-renderer-video",
     "dev": "npm run dev -w @nikpnevmatikos/html-renderer",
-    "typecheck": "npm run typecheck -w @nikpnevmatikos/html-renderer",
-    "test": "npm run test -w @nikpnevmatikos/html-renderer"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   }
 }
