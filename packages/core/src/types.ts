@@ -76,6 +76,7 @@ export interface RenderElement {
   display: 'block' | 'inline';
   style: ResolvedStyle;
   href?: string;
+  /** Raw HTML attributes. Always populated on elements built from HTML. */
   attribs?: Record<string, string>;
   listMarker?: string;
   listOrdered?: boolean;

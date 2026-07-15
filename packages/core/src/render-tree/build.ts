@@ -59,6 +59,9 @@ const BLOCK_TAGS = new Set([
   // document containers — kept as plain block wrappers for full-document HTML
   'html',
   'body',
+  // media containers — spec fallback content renders inside; playback via plugins
+  'video',
+  'audio',
 ]);
 
 const KNOWN_TAGS = new Set<string>([
@@ -245,6 +248,7 @@ function buildElement(
       tag: 'br',
       display: 'inline',
       style: pickInherited(inherited),
+      attribs: { ...el.attribs },
       children: [
         {
           kind: 'text',
@@ -278,6 +282,7 @@ function buildElement(
       tag: 'hr',
       display: 'block',
       style: resolveStyles(el, inherited, ctx, tagDefault, elInfo, ancestors),
+      attribs: { ...el.attribs },
       children: [],
     };
   }
@@ -298,6 +303,7 @@ function buildElement(
     tag: el.name,
     display,
     style: resolved,
+    attribs: { ...el.attribs },
     children: isVoid
       ? []
       : el.children
@@ -305,9 +311,8 @@ function buildElement(
           .filter((c): c is RenderNode => c !== null),
   };
 
-  if (el.name === 'a') {
-    if (el.attribs.href) element.href = el.attribs.href;
-    element.attribs = { ...el.attribs };
+  if (el.name === 'a' && el.attribs.href) {
+    element.href = el.attribs.href;
   }
 
   if (el.name === 'ul' || el.name === 'ol') {
