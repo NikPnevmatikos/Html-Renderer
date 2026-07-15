@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-15
+
+### Added
+
+- Every rendered element now exposes its raw HTML attributes as `attribs` (previously only `<a>` did). Custom renderers can read `src`, `poster`, `data-*`, etc. — groundwork for the upcoming plugin packages.
+- `<video>` and `<audio>` are now block-level containers; their children (HTML spec fallback content) render inside, as before, until a plugin or custom renderer takes over playback.
+
 ## [0.2.1] - 2026-07-14
 
 No library changes — republish of 0.2.0 after a repo-only CI fix in the example app. The shipped package is functionally identical to 0.2.0.

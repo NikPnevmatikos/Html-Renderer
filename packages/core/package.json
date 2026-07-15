@@ -1,6 +1,6 @@
 {
   "name": "@nikpnevmatikos/html-renderer",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "React Native HTML renderer in TypeScript — zero native modules, Fabric/Expo compatible. Supports tagsStyles, stylesheet with CSS selectors, custom renderers, and more.",
   "author": "NikPnevmatikos",
   "license": "MIT",

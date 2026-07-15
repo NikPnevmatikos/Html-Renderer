@@ -76,6 +76,8 @@ tagsStyles={{
 
 **Documents:** full-document HTML works too — literal `<html>`/`<body>` render as plain block containers, and `<head>`, `<title>`, `<style>`, `<script>`, `<link>`, `<meta>`, `<base>` are ignored by default.
 
+**Media:** `<video>` / `<audio>` render their spec fallback content as blocks and expose all attributes (`attribs`) to custom renderers; native playback ships as plugin packages (see below).
+
 ## Supported CSS
 
 - Typography: `color`, `font-size` (px), `font-family`, `font-weight`, `font-style`, `text-align`, `text-decoration`, `text-transform`, `letter-spacing`, `line-height` (px)

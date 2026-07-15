@@ -571,6 +571,51 @@ describe('full-document HTML', () => {
     expect((tree[0] as RenderElement).tag).toBe('p');
   });
 
+  it('exposes attribs on every element, not just <a>', () => {
+    const tree = buildRenderTree(
+      parseHtml('<p class="note" data-track="x">hi <span title="t">s</span></p>'),
+    );
+    const p = tree[0] as RenderElement;
+    expect(p.attribs).toMatchObject({ class: 'note', 'data-track': 'x' });
+    const span = p.children[1] as RenderElement;
+    expect(span.attribs).toMatchObject({ title: 't' });
+  });
+
+  it('renders video as a block exposing attribs and <source> children', () => {
+    const tree = buildRenderTree(
+      parseHtml(
+        '<video controls poster="p.jpg" width="640" height="360">' +
+          '<source src="v.webm" type="video/webm">' +
+          '<source src="v.mp4" type="video/mp4">' +
+          'fallback text</video>',
+      ),
+    );
+    const video = tree[0] as RenderElement;
+    expect(video.tag).toBe('video');
+    expect(video.display).toBe('block');
+    expect(video.attribs).toMatchObject({
+      controls: '',
+      poster: 'p.jpg',
+      width: '640',
+      height: '360',
+    });
+    const sources = video.children.filter(
+      (c): c is RenderElement => c.kind === 'element' && c.tag === 'source',
+    );
+    expect(sources).toHaveLength(2);
+    expect(sources[0]!.attribs).toMatchObject({ src: 'v.webm', type: 'video/webm' });
+    expect(sources[1]!.attribs).toMatchObject({ src: 'v.mp4', type: 'video/mp4' });
+    const fallback = video.children.find((c) => c.kind === 'text');
+    expect((fallback as RenderText).text).toContain('fallback text');
+  });
+
+  it('renders audio as a block', () => {
+    const tree = buildRenderTree(parseHtml('<audio src="a.mp3">no audio</audio>'));
+    const audio = tree[0] as RenderElement;
+    expect(audio.display).toBe('block');
+    expect(audio.attribs).toMatchObject({ src: 'a.mp3' });
+  });
+
   it('treeContainsTag finds a nested body and rejects absent tags', () => {
     const doc = buildRenderTree(parseHtml('<html><body><p>x</p></body></html>'));
     expect(treeContainsTag(doc, 'body')).toBe(true);
