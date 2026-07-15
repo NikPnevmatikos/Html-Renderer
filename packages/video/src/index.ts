@@ -1,38 +1,14 @@
-import type {
-  CustomRenderer,
-  HTMLElementModel,
-  RenderElement,
-} from '@nikpnevmatikos/html-renderer';
-import type { ComponentType } from 'react';
+import { createElement, type ComponentType } from 'react';
+import type { CustomRenderer } from '@nikpnevmatikos/html-renderer';
+import type { VideoPlayerProps, VideoRenderersConfig } from './types';
+import { extractPlayerProps } from './extract';
 
-/** A playable source resolved from a media element. */
-export interface MediaSource {
-  uri: string;
-  /** MIME type from the src-bearing element, when present (e.g. "video/mp4"). */
-  mimeType?: string;
-}
-
-/** Props every player adapter receives from the video renderer. */
-export interface VideoPlayerProps {
-  source: MediaSource;
-  poster?: string;
-  controls: boolean;
-  autoplay: boolean;
-  muted: boolean;
-  loop: boolean;
-  /** Pixel width to occupy: min(width attribute, contentWidth) when known. */
-  width?: number;
-  /** Ratio of the width/height attributes; defaults to 16/9. */
-  aspectRatio: number;
-  /** The underlying render-tree element, for advanced adapters. */
-  node: RenderElement;
-}
-
-/** Ready-to-spread HtmlRenderer props wiring <video> to a player component. */
-export interface VideoRenderersConfig {
-  customRenderers: Record<string, CustomRenderer>;
-  customHTMLElementModels: Record<string, HTMLElementModel>;
-}
+export type {
+  MediaSource,
+  VideoPlayerProps,
+  VideoRenderersConfig,
+} from './types';
+export { extractMediaSource, extractPlayerProps } from './extract';
 
 /**
  * Build the customRenderers / customHTMLElementModels pair that wires <video>
@@ -46,10 +22,18 @@ export interface VideoRenderersConfig {
  * their HTML fallback content.
  */
 export function createVideoRenderers(
-  _Player: ComponentType<VideoPlayerProps>,
+  Player: ComponentType<VideoPlayerProps>,
 ): VideoRenderersConfig {
-  throw new Error(
-    '@nikpnevmatikos/html-renderer-video is under development: ' +
-      'createVideoRenderers is not implemented yet.',
-  );
+  const video: CustomRenderer = (node, defaultRender, info) => {
+    const props = extractPlayerProps(node, info.contentWidth);
+    if (props === null) return defaultRender();
+    return createElement(Player, props);
+  };
+
+  return {
+    customRenderers: { video },
+    customHTMLElementModels: {
+      video: { display: 'block' },
+    },
+  };
 }
