@@ -2,8 +2,6 @@
 
 `<video>` support for [`@nikpnevmatikos/html-renderer`](https://www.npmjs.com/package/@nikpnevmatikos/html-renderer) — a player-agnostic core with a ready-made `expo-video` adapter.
 
-> **Status:** in development — not yet published.
-
 ## Install
 
 ```bash
@@ -67,7 +65,8 @@ const videoSupport = createVideoRenderers(MyPlayer);
 - **Source resolution:** the element's `src` attribute wins; otherwise the first `<source>` child with a `src` (its `type` becomes `source.mimeType`).
 - **Fallback content:** a `<video>` with no usable source renders its children — exactly what fallback content is for in HTML.
 - **Sizing:** width is capped at `contentWidth`; height follows the aspect ratio.
-- **Poster (expo adapter):** `expo-video` has no native poster, so the adapter overlays the poster image until playback first starts. The overlay ignores touches, so native controls stay usable.
+- **Poster & play badge (expo adapter):** `expo-video` has no native poster, so the adapter overlays the poster image until playback first starts, together with a play badge — tapping it starts playback. The badge also appears on videos without `controls`, which would otherwise be unstartable (HTML gives them no UI).
+- **Loading (expo adapter):** a spinner replaces the play badge when playback is requested before the media is ready, and a spinner overlay appears during mid-playback buffering stalls.
 
 ## Not (yet) covered
 

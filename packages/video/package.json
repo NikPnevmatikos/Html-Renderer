@@ -1,7 +1,6 @@
 {
   "name": "@nikpnevmatikos/html-renderer-video",
   "version": "0.1.0",
-  "private": true,
   "description": "<video> support for @nikpnevmatikos/html-renderer — player-agnostic core with an expo-video adapter.",
   "author": "NikPnevmatikos",
   "license": "MIT",
@@ -34,6 +33,7 @@
     "expo.js",
     "expo.d.ts",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "publishConfig": {
