@@ -28,14 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck core
+      # Build first: the video package resolves core types via its built dist.
+      - name: Build packages
+        run: npm run build
+
+      - name: Typecheck packages
         run: npm run typecheck
 
       - name: Run tests
         run: npm test
-
-      - name: Build core
-        run: npm run build
 
       - name: Typecheck example
         working-directory: example
