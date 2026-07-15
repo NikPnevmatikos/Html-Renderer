@@ -9,6 +9,9 @@ import {
   type TransformDom,
   type DomNode,
 } from '@nikpnevmatikos/html-renderer';
+import { createExpoVideoRenderers } from '@nikpnevmatikos/html-renderer-video/expo';
+
+const videoSupport = createExpoVideoRenderers();
 
 const demoHtml = `
   <h1>HtmlRenderer demo</h1>
@@ -75,6 +78,13 @@ function hello(name) {
 
   <h3>Image (auto-fit to contentWidth)</h3>
   <img src="https://picsum.photos/seed/big/1200/600" alt="Auto-fit big image" />
+
+  <h2>Video (@nikpnevmatikos/html-renderer-video)</h2>
+  <p>Rendered with the expo-video adapter — poster, native controls, sized by contentWidth:</p>
+  <video controls width="640" height="360" poster="https://picsum.photos/seed/videoposter/640/360">
+    <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+    Your device cannot play this video.
+  </video>
 `;
 
 const stylesheet = `
@@ -119,6 +129,7 @@ const customHTMLElementModels: Record<string, HTMLElementModel> = {
       marginVertical: 6,
     },
   },
+  ...videoSupport.customHTMLElementModels,
 };
 
 const renderersProps = {
@@ -129,6 +140,7 @@ const customRenderers: Record<string, CustomRenderer> = {
   hr: () => (
     <View style={{ height: 2, backgroundColor: '#1a73e8', marginVertical: 16 }} />
   ),
+  ...videoSupport.customRenderers,
 };
 
 const onLinkPress: OnLinkPress = (href, attribs) => {

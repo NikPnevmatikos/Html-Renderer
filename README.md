@@ -76,7 +76,7 @@ tagsStyles={{
 
 **Documents:** full-document HTML works too — literal `<html>`/`<body>` render as plain block containers, and `<head>`, `<title>`, `<style>`, `<script>`, `<link>`, `<meta>`, `<base>` are ignored by default.
 
-**Media:** `<video>` / `<audio>` render their spec fallback content as blocks and expose all attributes (`attribs`) to custom renderers; native playback ships as plugin packages (see below).
+**Media:** `<video>` / `<audio>` render their spec fallback content as blocks and expose all attributes (`attribs`) to custom renderers; for native playback add [`@nikpnevmatikos/html-renderer-video`](https://github.com/NikPnevmatikos/Html-Renderer/tree/main/packages/video) (see Plugin packages below).
 
 ## Supported CSS
 
@@ -269,17 +269,18 @@ Actively on the roadmap:
 - **Advanced CSS** — transforms, flex/grid layout of HTML content.
 - **Intrinsic table column widths** — columns render equal-width (`flex: 1`); `width` on `<col>` / cells is ignored.
 
-## Plugin packages (planned)
+## Plugin packages
 
-Features that need native dependencies ship as separate packages so the core stays zero-native-modules. Each uses the core's `customRenderers` and `customHTMLElementModels` APIs — no core changes needed to add them.
+Features that need native dependencies ship as separate packages so the core stays zero-native-modules. Each uses the core's `customRenderers` and `customHTMLElementModels` APIs.
 
-| Tags | Planned package | Native peer dep |
-|---|---|---|
-| `<iframe>` | `@nikpnevmatikos/html-renderer-webview` | `react-native-webview` |
-| `<video>`, `<audio>` | `@nikpnevmatikos/html-renderer-video` | `expo-video` or `react-native-video` |
-| `<svg>` | `@nikpnevmatikos/html-renderer-svg` | `react-native-svg` |
+| Tags | Package | Native peer dep | Status |
+|---|---|---|---|
+| `<video>` | [`@nikpnevmatikos/html-renderer-video`](https://github.com/NikPnevmatikos/Html-Renderer/tree/main/packages/video) | `expo-video` (optional — bring-your-own-player supported) | **Available** |
+| `<audio>` | `@nikpnevmatikos/html-renderer-video` | — | Planned |
+| `<iframe>` | `@nikpnevmatikos/html-renderer-webview` | `react-native-webview` | Planned |
+| `<svg>` | `@nikpnevmatikos/html-renderer-svg` | `react-native-svg` | Planned |
 
-Until these ship, you can wire any of these tags yourself via `customRenderers` — the same API the plugins will use. See the "Custom renderer" and "Custom HTML element models" examples above.
+For tags without a plugin yet, wire them yourself via `customRenderers` — the same API the plugins use. See the "Custom renderer" and "Custom HTML element models" examples above.
 
 ## Development
 
