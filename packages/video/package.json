@@ -23,10 +23,16 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./expo": {
+      "types": "./dist/expo.d.ts",
+      "default": "./dist/expo.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
+    "expo.js",
+    "expo.d.ts",
     "README.md",
     "LICENSE"
   ],
@@ -61,11 +67,18 @@
   ],
   "peerDependencies": {
     "@nikpnevmatikos/html-renderer": ">=0.3.0",
+    "expo-video": ">=2.0.0",
     "react": ">=18",
     "react-native": ">=0.73"
   },
+  "peerDependenciesMeta": {
+    "expo-video": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@nikpnevmatikos/html-renderer": "*",
+    "expo-video": "~3.0.16",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
     "jest": "^29.7.0",

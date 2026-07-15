@@ -2,7 +2,7 @@
 
 `<video>` support for [`@nikpnevmatikos/html-renderer`](https://www.npmjs.com/package/@nikpnevmatikos/html-renderer) — a player-agnostic core with a pre-wired `expo-video` adapter.
 
-> **Status:** in development — player-agnostic core implemented; `expo-video` adapter pending. Not yet published.
+> **Status:** in development — player-agnostic core and `expo-video` adapter implemented; docs and example pending. Not yet published.
 
 ## Design
 
