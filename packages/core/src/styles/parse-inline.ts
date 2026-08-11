@@ -467,12 +467,15 @@ function stripFontFamilyQuotes(value: string): string {
 const EM_BASE_PX = 14;
 
 function parsePx(value: string): number | null {
-  const match = /^(-?\d+(?:\.\d+)?)\s*(px|em|rem)?$/.exec(value);
+  const match = /^(-?\d+(?:\.\d+)?)\s*(px|em|rem|pt)?$/.exec(value);
   if (!match) return null;
   const n = parseFloat(match[1]!);
   const unit = match[2];
   if (unit === 'em' || unit === 'rem') {
     return n * EM_BASE_PX;
+  }
+  if (unit === 'pt') {
+    return (n * 4) / 3;
   }
   return n;
 }
