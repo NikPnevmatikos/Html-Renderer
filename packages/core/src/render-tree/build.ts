@@ -98,6 +98,24 @@ const DEFAULT_IGNORED_DOM_TAGS = [
   'base',
 ];
 
+// Browsers treat `height` on table boxes as a minimum — rows and cells grow
+// past it to fit their content (CSS 2.1 §17.5). RN applies `height` as a hard
+// cap, which makes email-style `<td style="height: 25px">` clip its own
+// content, so for these tags the resolved height is remapped to minHeight.
+const TABLE_HEIGHT_AS_MIN_TAGS = new Set(['table', 'tr', 'td', 'th']);
+
+function applyTableHeightSemantics(style: ResolvedStyle): void {
+  const h = style.height;
+  if (h === undefined) return;
+  delete style.height;
+  const min = style.minHeight;
+  if (min === undefined) {
+    style.minHeight = h;
+  } else if (typeof min === 'number' && typeof h === 'number') {
+    style.minHeight = Math.max(min, h);
+  }
+}
+
 const warnedTags = new Set<string>();
 
 function warnUnsupportedTag(tag: string): void {
@@ -292,6 +310,9 @@ function buildElement(
     (BLOCK_TAGS.has(el.name) ? 'block' : 'inline');
 
   const resolved = resolveStyles(el, inherited, ctx, tagDefault, elInfo, ancestors);
+  if (TABLE_HEIGHT_AS_MIN_TAGS.has(el.name)) {
+    applyTableHeightSemantics(resolved);
+  }
   const childPreserve = preserveWhitespace || el.name === 'pre';
 
   const isVoid = customModel?.isVoid === true;
