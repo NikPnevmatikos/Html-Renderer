@@ -114,6 +114,41 @@ describe('buildRenderTree', () => {
     expect(td.colSpan).toBe(2);
   });
 
+  it('treats height on table boxes as min-height (browser table semantics)', () => {
+    const tree = build(
+      '<table style="height: 50px"><tr style="height: 25px"><td style="height: 25px">a</td><th style="height: 25px">b</th></tr></table>',
+    );
+    const table = tree[0] as RenderElement;
+    const tr = table.children[0] as RenderElement;
+    const td = tr.children[0] as RenderElement;
+    const th = tr.children[1] as RenderElement;
+    for (const el of [table, tr, td, th]) {
+      expect(el.style.height).toBeUndefined();
+    }
+    expect(table.style.minHeight).toBe(50);
+    expect(tr.style.minHeight).toBe(25);
+    expect(td.style.minHeight).toBe(25);
+    expect(th.style.minHeight).toBe(25);
+  });
+
+  it('merges cell height with an explicit min-height by taking the max', () => {
+    const tree = build(
+      '<table><tr><td style="height: 25px; min-height: 40px">a</td><td style="height: 50px; min-height: 20px">b</td></tr></table>',
+    );
+    const tr = (tree[0] as RenderElement).children[0] as RenderElement;
+    const tdA = tr.children[0] as RenderElement;
+    const tdB = tr.children[1] as RenderElement;
+    expect(tdA.style.minHeight).toBe(40);
+    expect(tdB.style.minHeight).toBe(50);
+  });
+
+  it('keeps height as a hard cap on non-table elements', () => {
+    const tree = build('<div style="height: 25px">a</div>');
+    const div = tree[0] as RenderElement;
+    expect(div.style.height).toBe(25);
+    expect(div.style.minHeight).toBeUndefined();
+  });
+
   it('collapses whitespace as part of the pipeline', () => {
     const tree = build('<p>  hello   world  </p>');
     const p = tree[0] as RenderElement;
