@@ -28,6 +28,19 @@ describe('parseInlineStyle', () => {
     expect(parseInlineStyle('font-size: 12')).toEqual({ fontSize: 12 });
   });
 
+  it('parses pt units at 4/3 px (common in email/CMS HTML)', () => {
+    expect(parseInlineStyle('font-size: 12pt')).toEqual({ fontSize: 16 });
+    expect(parseInlineStyle('font-size: 16pt').fontSize).toBeCloseTo(21.333, 2);
+    expect(parseInlineStyle('line-height: 12pt')).toEqual({ lineHeight: 16 });
+    expect(parseInlineStyle('margin: 6pt')).toEqual({
+      marginTop: 8,
+      marginRight: 8,
+      marginBottom: 8,
+      marginLeft: 8,
+    });
+    expect(parseInlineStyle('height: 15pt')).toEqual({ height: 20 });
+  });
+
   it('parses font-weight keyword and numeric', () => {
     expect(parseInlineStyle('font-weight: bold')).toEqual({
       fontWeight: 'bold',

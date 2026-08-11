@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-11
+
+Layout-correctness release for real-world email/CMS HTML. Existing table
+layouts may shift — toward what a browser renders.
+
+### Added
+
+- `pt` units are now parsed everywhere a length is accepted (`font-size`,
+  `line-height`, margins, paddings, borders, dimensions…) at the CSS ratio
+  1pt = 4⁄3px. Email and CMS editors (TinyMCE, Google Docs exports) emit `pt`
+  sizes almost exclusively; previously those declarations were silently
+  dropped and fell back to defaults.
+
+### Fixed
+
+- `height` on `table`/`tr`/`td`/`th` is now treated as a minimum height,
+  matching browser table semantics (CSS 2.1 §17.5) — the box grows to fit its
+  content. Previously it was applied as a hard RN height, so the common email
+  pattern `<td style="height: 25px; padding: 12px …">button</td>` clipped its
+  own label out of the visible box. An explicit `min-height` still wins when
+  larger. `height` on non-table elements is unchanged.
+- A table cell's `width` now actually shapes the row. Cells used to be
+  rendered with `flex: colspan`, whose zero flex-basis overrode any declared
+  width — every column came out equal. Now: a row where every cell has a
+  percent width distributes columns proportionally to those percents (e.g.
+  `15% / 33% / 15%` keeps the 15:33:15 ratio, like a browser scaling
+  percentage columns); in mixed rows, sized cells are pinned via `flexBasis`
+  and widthless cells share the remainder; rows with no widths behave as
+  before.
+
 ## [0.3.0] - 2026-07-15
 
 ### Added

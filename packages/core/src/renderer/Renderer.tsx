@@ -9,6 +9,7 @@ import {
   type TextProps,
   type TextStyle,
   type ViewProps,
+  type ViewStyle,
 } from 'react-native';
 import type {
   DomNode,
@@ -24,6 +25,7 @@ import { buildRenderTree, treeContainsTag } from '../render-tree/build';
 import { resolveRootStyle } from '../styles/root';
 import { splitStyle } from '../styles/split';
 import { RenderedImage } from './RenderedImage';
+import { resolveRowCellFlex, type CellFlexStyle } from './table-layout';
 
 export interface CustomRendererInfo {
   renderersProps: Record<string, Record<string, unknown>>;
@@ -425,9 +427,12 @@ function renderTableRow(
       cells.push(c);
     }
   }
+  const cellFlex = resolveRowCellFlex(
+    cells.map((c) => ({ width: c.style.width, colSpan: c.colSpan })),
+  );
   return (
     <View key={key} {...ctx.defaultViewProps} style={styles.tr}>
-      {cells.map((cell, i) => renderTableCell(cell, i, ctx))}
+      {cells.map((cell, i) => renderTableCell(cell, i, ctx, cellFlex[i]))}
     </View>
   );
 }
@@ -436,14 +441,20 @@ function renderTableCell(
   cell: RenderElement,
   key: React.Key | undefined,
   ctx: RenderCtx,
+  flexStyle?: CellFlexStyle,
 ): React.ReactNode {
   const { view: vStyle } = splitStyle(cell.style);
-  const flex = cell.colSpan ?? 1;
+  if (flexStyle) {
+    // The row layout consumed the cell's width (as a proportion or as
+    // flexBasis) — leaving it here too would fight the flex rule.
+    delete vStyle.width;
+  }
+  const flexRule = (flexStyle ?? { flex: cell.colSpan ?? 1 }) as ViewStyle;
   return (
     <View
       key={key}
       {...ctx.defaultViewProps}
-      style={[styles.tableCell, { flex }, vStyle]}
+      style={[styles.tableCell, flexRule, vStyle]}
     >
       {renderBlockChildren(cell.children, cell.style, ctx)}
     </View>

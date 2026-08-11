@@ -80,11 +80,18 @@ tagsStyles={{
 
 ## Supported CSS
 
-- Typography: `color`, `font-size` (px), `font-family`, `font-weight`, `font-style`, `text-align`, `text-decoration`, `text-transform`, `letter-spacing`, `line-height` (px)
+- Typography: `color`, `font-size` (px/pt), `font-family`, `font-weight`, `font-style`, `text-align`, `text-decoration`, `text-transform`, `letter-spacing`, `line-height` (px/pt)
 - Box model: `margin` / `padding` (shorthands + individual sides), `background-color`, the `border` family (shorthands, per-side widths/colors, `border-style`, `border-radius` including per-corner), `width`/`height` with `min-`/`max-` variants
 - Other: `opacity`, `display` (`flex` and `none`)
 - Colors: hex, `rgb()`, `rgba()`, `hsl()`, named (passed through to RN's color system)
-- Units: **`px` only** for now — `em`/`rem` are not resolved yet, and `%` works only on `width`/`height`
+- Units: **`px` and `pt`** (1pt = 4⁄3px, the common case in email/CMS output) — `em`/`rem` are not resolved yet, and `%` works only on `width`/`height`
+
+### Table semantics
+
+Two places where browser table behavior differs from plain RN flexbox are matched for you:
+
+- `height` on `table`/`tr`/`td`/`th` is treated as a **minimum** — the box grows past it to fit its content, like a browser table (RN alone would clip). `height` on other elements stays a hard size.
+- A cell's `width` is honored in the row: when every cell in a row has a percent width, columns share the row in proportion to those percents; cells with a px or percent width in a mixed row are pinned and the widthless cells share the remainder. Rows without widths fall back to equal columns weighted by `colspan`.
 
 ## Examples
 
