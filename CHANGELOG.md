@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-31
+
+### Added
+
+- Interactive `<details>`/`<summary>` support in core. Both tags are now
+  known block elements (no more "unsupported tag" warning), and `<details>`
+  renders as a working disclosure widget: tapping the summary row toggles the
+  content, a ▸/▾ marker shows the state, and the row exposes
+  `accessibilityRole="button"` with `expanded` state. The `open` attribute
+  sets the initial state. New `renderersProps.details` config
+  (`DetailsRendererProps`, exported): `initialOpen`, `markerTextStyle`,
+  `onToggle(open, attribs)`. Only the first `<summary>` child becomes the
+  label (per spec); without one the label falls back to "Details". A
+  `customRenderers.details` entry overrides the built-in widget as usual.
+
 ## [0.4.0] - 2026-08-11
 
 Layout-correctness release for real-world email/CMS HTML. Existing table

@@ -33,6 +33,20 @@ describe('buildRenderTree', () => {
     expect(em.style.fontStyle).toBe('italic');
   });
 
+  it('marks details/summary as known block elements without warning', () => {
+    const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const tree = build(
+      '<details open><summary>More</summary><p>body</p></details>',
+    );
+    const details = tree[0] as RenderElement;
+    expect(details).toMatchObject({ tag: 'details', display: 'block' });
+    expect(details.attribs?.open).toBe('');
+    const summary = details.children[0] as RenderElement;
+    expect(summary).toMatchObject({ tag: 'summary', display: 'block' });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it('parses images with explicit dimensions', () => {
     const tree = build('<img src="x.jpg" width="200" height="100" alt="hi">');
     expect(tree[0]).toMatchObject<Partial<RenderImage>>({

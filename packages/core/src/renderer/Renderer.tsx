@@ -3,6 +3,7 @@ import {
   Text,
   View,
   Linking,
+  Pressable,
   StyleSheet,
   type AccessibilityRole,
   type StyleProp,
@@ -26,6 +27,7 @@ import { resolveRootStyle } from '../styles/root';
 import { splitStyle } from '../styles/split';
 import { RenderedImage } from './RenderedImage';
 import { resolveRowCellFlex, type CellFlexStyle } from './table-layout';
+import { splitDetailsChildren } from './details';
 
 export interface CustomRendererInfo {
   renderersProps: Record<string, Record<string, unknown>>;
@@ -383,6 +385,10 @@ function renderBlockDefault(
     );
   }
 
+  if (el.tag === 'details') {
+    return <DetailsView key={key} el={el} ctx={ctx} />;
+  }
+
   const a11yRole = blockA11yRole(el.tag);
   const a11yLevel = HEADING_LEVEL[el.tag];
 
@@ -402,6 +408,80 @@ function renderBlockDefault(
 function blockA11yRole(tag: string): AccessibilityRole | undefined {
   if (tag in HEADING_LEVEL) return 'header';
   return undefined;
+}
+
+export interface DetailsRendererProps {
+  /** Start expanded even without an `open` attribute on the element. */
+  initialOpen?: boolean;
+  /** Style for the disclosure marker (▸/▾) next to the summary. */
+  markerTextStyle?: StyleProp<TextStyle>;
+  onToggle?: (open: boolean, attribs: Record<string, string>) => void;
+}
+
+function DetailsView({
+  el,
+  ctx,
+}: {
+  el: RenderElement;
+  ctx: RenderCtx;
+}): React.ReactElement {
+  const detailsProps = ctx.renderersProps.details as
+    | DetailsRendererProps
+    | undefined;
+  const attribs = el.attribs ?? {};
+  const [open, setOpen] = React.useState(
+    attribs.open !== undefined || detailsProps?.initialOpen === true,
+  );
+  const { summary, rest } = splitDetailsChildren(el.children);
+  const { view: vStyle } = splitStyle(el.style);
+  const summaryStyle = summary?.style ?? el.style;
+  const { view: summaryVStyle, text: summaryTStyle } =
+    splitStyle(summaryStyle);
+
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    detailsProps?.onToggle?.(next, attribs);
+  };
+
+  return (
+    <View {...ctx.defaultViewProps} style={[styles.block, vStyle]}>
+      <Pressable
+        accessibilityRole="button"
+        // Both spellings: RN native reads accessibilityState, react-native-web
+        // (0.19+) only maps the aria-* prop.
+        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
+        onPress={toggle}
+        style={[styles.detailsSummaryRow, summaryVStyle]}
+      >
+        <Text
+          {...ctx.defaultTextProps}
+          style={[
+            summaryTStyle,
+            styles.detailsMarker,
+            detailsProps?.markerTextStyle,
+          ]}
+        >
+          {open ? '▾' : '▸'}
+        </Text>
+        <View {...ctx.defaultViewProps} style={styles.detailsSummaryContent}>
+          {summary ? (
+            renderBlockChildren(summary.children, summaryStyle, ctx)
+          ) : (
+            <Text {...ctx.defaultTextProps} style={summaryTStyle}>
+              Details
+            </Text>
+          )}
+        </View>
+      </Pressable>
+      {open ? (
+        <View {...ctx.defaultViewProps}>
+          {renderBlockChildren(rest, el.style, ctx)}
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 function renderTableChildren(
@@ -589,5 +669,15 @@ const styles = StyleSheet.create({
   tableCaption: {
     padding: 6,
     marginBottom: 4,
+  },
+  detailsSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  detailsMarker: {
+    marginRight: 6,
+  },
+  detailsSummaryContent: {
+    flex: 1,
   },
 });

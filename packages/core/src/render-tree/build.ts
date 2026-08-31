@@ -56,6 +56,8 @@ const BLOCK_TAGS = new Set([
   'dl',
   'dt',
   'dd',
+  'details',
+  'summary',
   // document containers — kept as plain block wrappers for full-document HTML
   'html',
   'body',
@@ -70,6 +72,7 @@ const KNOWN_TAGS = new Set<string>([
   'ul', 'ol', 'li', 'pre', 'blockquote', 'hr',
   'article', 'aside', 'footer', 'header', 'main', 'nav', 'section',
   'address', 'figure', 'figcaption', 'dl', 'dt', 'dd',
+  'details', 'summary',
   // tables
   'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
   'col', 'colgroup',

@@ -49,7 +49,7 @@ export default function Screen() {
 | `idsStyles` | `Record<id, StyleInput>` | Style by `id` attribute. |
 | `customRenderers` | `Record<tag, CustomRenderer>` | Replace or wrap the renderer for any tag. |
 | `customHTMLElementModels` | `Record<tag, HTMLElementModel>` | Define new tags with custom block/inline semantics and default styles. |
-| `renderersProps` | `Record<tag, Record<string, unknown>>` | Per-renderer config. Built-in consumers: `ol.startIndex`, `ul/ol.markerTextStyle`, `img.initialDimensions`. |
+| `renderersProps` | `Record<tag, Record<string, unknown>>` | Per-renderer config. Built-in consumers: `ol.startIndex`, `ul/ol.markerTextStyle`, `img.initialDimensions`, `details` (`initialOpen`, `markerTextStyle`, `onToggle`). |
 | `contentWidth` | `number` | Max render width. Images wider than this scale down proportionally. |
 | `transformDom` | `(dom: DomNode[]) => DomNode[]` | Runs after parse, before build. Use for sanitization or tag rewrites. |
 | `onLinkPress` | `(href, attribs) => void` | Override the default `Linking.openURL` link handler. |
@@ -70,9 +70,11 @@ tagsStyles={{
 
 ## Supported tags
 
-**Block:** `p`, `div`, `h1–h6`, `ul`, `ol`, `li`, `pre`, `blockquote`, `hr`, `table`, `thead`, `tbody`, `tfoot`, `tr`, `th`, `td`, `caption`.
+**Block:** `p`, `div`, `h1–h6`, `ul`, `ol`, `li`, `pre`, `blockquote`, `hr`, `table`, `thead`, `tbody`, `tfoot`, `tr`, `th`, `td`, `caption`, `details`/`summary`.
 
 **Inline:** `span`, `strong`/`b`, `em`/`i`, `u`, `s`/`del`/`strike`, `ins`, `mark`, `small`, `code`, `a`, `br`, `img`.
+
+**Interactive:** `<details>`/`<summary>` is a working disclosure widget — tapping the summary row expands/collapses the content, with a ▸/▾ marker and `accessibilityRole="button"` + expanded state. The `open` attribute sets the initial state. Configure via `renderersProps.details` (`DetailsRendererProps`): `initialOpen` to start expanded, `markerTextStyle` to style the marker, `onToggle(open, attribs)` to observe changes. A `customRenderers.details` entry still takes over entirely, like for any tag.
 
 **Documents:** full-document HTML works too — literal `<html>`/`<body>` render as plain block containers, and `<head>`, `<title>`, `<style>`, `<script>`, `<link>`, `<meta>`, `<base>` are ignored by default.
 

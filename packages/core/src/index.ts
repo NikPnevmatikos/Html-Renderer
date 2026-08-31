@@ -5,6 +5,7 @@ export type {
   CustomRendererInfo,
   TransformDom,
   OnLinkPress,
+  DetailsRendererProps,
 } from './renderer/Renderer';
 export type {
   DomNode,
