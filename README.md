@@ -4,7 +4,7 @@
 [![CI](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a maintained alternative to the abandoned `react-native-render-html`.
+A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a lightweight alternative to `react-native-render-html` and its successor `@native-html/render`.
 
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
