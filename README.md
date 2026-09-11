@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@nikpnevmatikos/html-renderer?color=blue&label=npm)](https://www.npmjs.com/package/@nikpnevmatikos/html-renderer)
 [![CI](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml/badge.svg)](https://github.com/NikPnevmatikos/Html-Renderer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Open in Snack](https://img.shields.io/badge/Open%20in-Snack-4630EB?logo=expo&logoColor=white)](https://snack.expo.dev/?platform=web&sdkVersion=56.0.0&name=html-renderer%20example&dependencies=%40nikpnevmatikos%2Fhtml-renderer%2C%40nikpnevmatikos%2Fhtml-renderer-video%2C%40nikpnevmatikos%2Fhtml-renderer-video%2Fexpo%2Cexpo-video%2Cexpo-status-bar&files=%7B%22App.tsx%22%3A%7B%22type%22%3A%22CODE%22%2C%22url%22%3A%22https%3A%2F%2Fraw.githubusercontent.com%2FNikPnevmatikos%2FHtml-Renderer%2Fmain%2Fexample%2FApp.tsx%22%7D%7D)
 
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a lightweight alternative to `react-native-render-html` and its successor `@native-html/render`.
 
@@ -296,6 +297,8 @@ npm run build         # build core to dist
 # live example app
 cd example && npm start
 ```
+
+The same example runs in the browser without installing anything: use the **Open in Snack** badge at the top of this README. Snack must be on Expo SDK 56 or newer for the `<video>` section, because older Snack runtimes do not ship `expo-video`.
 
 ## License
 
