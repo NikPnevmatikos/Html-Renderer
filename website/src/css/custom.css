@@ -1,0 +1,27 @@
+/**
+ * Global overrides for the Infima design system used by Docusaurus.
+ * Primary palette derived from #1a73e8, the blue used in the example app.
+ */
+
+:root {
+  --ifm-color-primary: #1a73e8;
+  --ifm-color-primary-dark: #0f66d6;
+  --ifm-color-primary-darker: #0e60ca;
+  --ifm-color-primary-darkest: #0c4fa6;
+  --ifm-color-primary-light: #3283eb;
+  --ifm-color-primary-lighter: #3f8bec;
+  --ifm-color-primary-lightest: #66a3f0;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #7ab3f7;
+  --ifm-color-primary-dark: #5ea2f5;
+  --ifm-color-primary-darker: #509af4;
+  --ifm-color-primary-darkest: #2381f1;
+  --ifm-color-primary-light: #96c4f9;
+  --ifm-color-primary-lighter: #a4ccfa;
+  --ifm-color-primary-lightest: #cee3fc;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
