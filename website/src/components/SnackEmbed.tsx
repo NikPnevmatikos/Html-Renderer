@@ -16,16 +16,17 @@ const FILES = encodeURIComponent(
   }),
 );
 
-const DEPENDENCIES = encodeURIComponent(
-  [
-    '@nikpnevmatikos/html-renderer',
-    '@nikpnevmatikos/html-renderer-video',
-    // Deep imports must be listed as their own dependency for Snack to resolve them.
-    '@nikpnevmatikos/html-renderer-video/expo',
-    'expo-video',
-    'expo-status-bar',
-  ].join(','),
-);
+// Not URL-encoded on purpose: embed.js decodes `data-snack-files` before
+// posting it to the iframe but forwards `data-snack-dependencies` verbatim,
+// and Snack does not decode it on arrival.
+const DEPENDENCIES = [
+  '@nikpnevmatikos/html-renderer',
+  '@nikpnevmatikos/html-renderer-video',
+  // Deep imports must be listed as their own dependency for Snack to resolve them.
+  '@nikpnevmatikos/html-renderer-video/expo',
+  'expo-video',
+  'expo-status-bar',
+].join(',');
 
 // expo-video is only bundled into Snack's runtime from SDK 56 onwards.
 const SDK_VERSION = '56.0.0';
