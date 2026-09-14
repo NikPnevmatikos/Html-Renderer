@@ -8,6 +8,10 @@
 
 A modern React Native HTML renderer, written in TypeScript with **zero native modules**. Built from scratch as a lightweight alternative to `react-native-render-html` and its successor `@native-html/render`.
 
+![HTML rendered natively: cascading stylesheet rules, a custom element model, an ordered list with a start index, a custom hr renderer, inline formatting, a code block and a blockquote](https://raw.githubusercontent.com/NikPnevmatikos/Html-Renderer/main/.github/assets/screenshot.png)
+
+<sub>Output from the [example app](https://github.com/NikPnevmatikos/Html-Renderer/tree/main/example) — [run it in your browser](https://snack.expo.dev/?platform=web&sdkVersion=56.0.0&name=html-renderer%20example&dependencies=%40nikpnevmatikos%2Fhtml-renderer%2C%40nikpnevmatikos%2Fhtml-renderer-video%2C%40nikpnevmatikos%2Fhtml-renderer-video%2Fexpo%2Cexpo-video%2Cexpo-status-bar&files=%7B%22App.tsx%22%3A%7B%22type%22%3A%22CODE%22%2C%22url%22%3A%22https%3A%2F%2Fraw.githubusercontent.com%2FNikPnevmatikos%2FHtml-Renderer%2Fmain%2Fexample%2FApp.tsx%22%7D%7D) with nothing to install.</sub>
+
 - **Zero native code** — works on iOS, Android, Web (via `react-native-web`), and Expo Go without a dev build.
 - **Fabric (new architecture) compatible** out of the box.
 - **Real CSS stylesheet support** — a `stylesheet` prop that accepts actual CSS with selectors and specificity.

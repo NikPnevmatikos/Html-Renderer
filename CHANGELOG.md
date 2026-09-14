@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-09-14
+
+Documentation-only release. No runtime changes — the built output is
+identical to 0.5.0, so upgrading is optional.
+
+### Changed
+
+- Two badges added, which only reach the npm page on publish: **Open in
+  Snack**, which runs the example app in a browser with nothing to install,
+  and **Docs**, linking to the new documentation site at
+  https://nikpnevmatikos.github.io/Html-Renderer/.
+
 ## [0.5.0] - 2026-08-31
 
 ### Added
